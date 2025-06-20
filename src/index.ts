@@ -88,12 +88,7 @@ bot.action(/CLAIM_(.+)/, async ctx => {
 
 bot.action(/CANCEL_(.+)/, async ctx => {
   try {
-    const sessionIdStr = ctx.match[1];
-    const sessionId = parseInt(sessionIdStr, 10);
-
-    if (isNaN(sessionId)) {
-      return ctx.answerCbQuery(MESSAGES.INVALID_SESSION_ID);
-    }
+    const sessionId = ctx.match[1];
 
     await supabase.from('notifications').delete().eq('session_id', sessionId);
     await supabase.from('sessions').delete().eq('session_id', sessionId);
