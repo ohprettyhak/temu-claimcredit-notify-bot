@@ -27,7 +27,7 @@ Temu 크레딧백 알림 봇이에요.
 
 💡 팁
 – 세션은 7일간 유지돼요
-– 알림 오면 “✅ 수령 완료” 버튼 눌러주세요
+– 알림 오면 "✅ 수령 완료" 버튼 눌러주세요
 – /cancel_session으로 언제든 멈출 수 있어요`,
 
   COMMAND_START_SESSION: '알림 세션 시작',
@@ -86,4 +86,9 @@ Temu 크레딧백 알림 봇이에요.
   NOTIFICATION_SEND_ERROR: (chatId: string, notifId: string) =>
     `알림 전송 실패했어요. (사용자: ${chatId}, ID: ${notifId})`,
   BOT_RUNNING: '봇이 정상적으로 실행 중이에요.',
+
+  PROCESSING_ERROR: '처리 중 오류가 발생했어요.',
+  COMMAND_ERROR: (command: string) => `${command} 명령어 처리 중 오류가 발생했어요.`,
+  ACTION_ERROR: (action: string) => `${action} 처리 중 오류가 발생했어요.`,
+  GLOBAL_BOT_ERROR: '봇 처리 중 오류가 발생했어요.',
 } as const;

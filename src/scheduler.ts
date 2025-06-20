@@ -6,16 +6,26 @@ import { claimButtons, temuButton } from './services/keyboards';
 import { MESSAGES } from './constants';
 
 export const scheduleJobs = () => {
-  cron.schedule('* * * * *', async () => {
-    const now = DateTime.utc().toISO();
-    const { data: due, error: dueError } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('sent_time_utc', null)
-      .eq('is_clicked', false)
-      .lte('notification_time_utc', now);
+  cron.schedule('0 * * * *', async () => {
+    const now = DateTime.utc();
 
-    if (dueError || !due || due.length === 0) return;
+    const { data: due, error: dueError } = await supabase
+      .from('notification_by_datetime_view')
+      .select('*')
+      .eq('year', now.year)
+      .eq('month', now.month)
+      .eq('day', now.day)
+      .eq('hour', now.hour);
+
+    if (dueError) {
+      console.error('Error fetching notifications from view:', dueError);
+      return;
+    }
+
+    if (!due || due.length === 0) {
+      console.log('No due notifications for this hour.');
+      return;
+    }
 
     for (const notification of due) {
       const { data: session, error: sessionError } = await supabase
@@ -44,7 +54,7 @@ export const scheduleJobs = () => {
 
         await supabase
           .from('notifications')
-          .update({ sent_time_utc: now })
+          .update({ sent_time_utc: now.toISO() })
           .eq('notification_id', notification.notification_id);
       } catch (error) {
         console.error(
