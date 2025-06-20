@@ -4,18 +4,18 @@ Temu 크레딧백 알림 봇이에요.
 매일 아침·저녁 크레딧백 수령 시점을 알려드려요.
 
 📋 가능한 명령어
-/start_session   알림 세션 시작
-/status          상태 확인
-/cancel_session 세션 취소
-/help            도움말 보기`,
+/start_session - 알림 세션 시작
+/status - 상태 확인
+/cancel_session - 세션 취소
+/help - 도움말 보기`,
 
   HELP: `Temu 크레딧백 알림 봇 도움말이에요.
 
 📝 명령어
-• /start_session   알림 세션 시작 (시간대·시간 설정)
-• /status          상태 확인
-• /cancel_session 세션 취소
-• /help            도움말 보기
+• /start_session - 알림 세션 시작 (시간대·시간 설정)
+• /status - 상태 확인
+• /cancel_session - 세션 취소
+• /help - 도움말 보기
 
 ⏰ 알림 시간
 아침: 오전 00:00~11:00
