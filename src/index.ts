@@ -64,22 +64,20 @@ bot.command(COMMANDS.CANCEL_SESSION, async ctx => {
 bot.action(/CLAIM_(.+)/, async ctx => {
   try {
     const notificationId = ctx.match[1];
-    const { data: notif, error } = await supabase
+    const { data: notification, error } = await supabase
       .from('notifications')
       .select('session_id,notification_date')
       .eq('notification_id', notificationId)
       .single();
 
-    if (error || !notif) {
+    if (error || !notification) {
       return ctx.answerCbQuery(MESSAGES.NOTIFICATION_NOT_FOUND);
     }
 
     await supabase
       .from('notifications')
       .update({ is_clicked: true })
-      .or(
-        `notification_id.eq.${notificationId},session_id.eq.${notif.session_id}.notification_date.eq.${notif.notification_date}.notification_type.eq.evening`,
-      );
+      .eq('notification_id', notificationId);
 
     await ctx.answerCbQuery(MESSAGES.MARKED_AS_CLAIMED);
   } catch (err) {

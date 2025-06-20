@@ -2,7 +2,7 @@ import cron from 'node-cron';
 import { supabase } from './db';
 import { bot } from './index';
 import { DateTime } from 'luxon';
-import { claimButtons, temuButton } from './services/keyboards';
+import { claimButtons } from './services/keyboards';
 import { MESSAGES } from './constants';
 
 export const scheduleJobs = () => {
@@ -48,7 +48,7 @@ export const scheduleJobs = () => {
           });
         } else {
           await bot.telegram.sendMessage(chatId, MESSAGES.EVENING_NOTIFICATION, {
-            reply_markup: temuButton.reply_markup,
+            reply_markup: claimButtons(notification.notification_id.toString()).reply_markup,
           });
         }
 

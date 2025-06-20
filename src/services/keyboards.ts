@@ -57,13 +57,11 @@ export const confirmKeyboard = Markup.inlineKeyboard([
   Markup.button.callback(BUTTON_TEXT.CANCEL, CALLBACK_ACTIONS.CANCEL),
 ]);
 
-export function claimButtons(notifId: string) {
+export function claimButtons(notificationId: string) {
   return Markup.inlineKeyboard([
-    [Markup.button.callback(BUTTON_TEXT.CLAIMED, `${CALLBACK_ACTIONS.CLAIM}_${notifId}`)],
-    [Markup.button.url(BUTTON_TEXT.GO_TO_TEMU, 'https://www.temu.com')],
+    [
+      Markup.button.callback(BUTTON_TEXT.CLAIMED, `${CALLBACK_ACTIONS.CLAIM}_${notificationId}`),
+      Markup.button.url(BUTTON_TEXT.GO_TO_TEMU, 'https://www.temu.com/s/'),
+    ],
   ]);
 }
-
-export const temuButton = Markup.inlineKeyboard([
-  Markup.button.url(BUTTON_TEXT.GO_TO_TEMU, 'https://www.temu.com'),
-]);
