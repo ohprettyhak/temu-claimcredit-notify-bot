@@ -1,0 +1,27 @@
+{
+  "name": "temu-claimcredit-notify-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/src/index.js",
+  "scripts": {
+    "build": "swc src -d dist --config-file .swcrc",
+    "start": "node dist/index.js",
+    "dev": "node -r @swc-node/register src/index.ts"
+  },
+  "devDependencies": {
+    "@swc-node/register": "^1.10.10",
+    "@swc/cli": "^0.7.7",
+    "@swc/core": "^1.12.4",
+    "@types/luxon": "^3.6.2",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3"
+  },
+  "private": true,
+  "dependencies": {
+    "@supabase/supabase-js": "^2.50.0",
+    "dotenv": "^16.5.0",
+    "luxon": "^3.6.1",
+    "node-cron": "^4.1.0",
+    "telegraf": "^4.16.3"
+  }
+}
