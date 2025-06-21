@@ -3,15 +3,24 @@ import { DateTime } from 'luxon';
 import {
   confirmKeyboard,
   timeKeyboard,
+  todayClaimKeyboard,
   createUser,
   createSession,
   createNotifications,
   toUTC,
 } from '../services';
-import { hasCallbackData, hasMessageText, MyContext } from '../types';
+import {
+  hasCallbackData,
+  hasMessageText,
+  MyContext,
+  SessionCreationData,
+  NotificationRecord,
+} from '../types';
 import {
   CALLBACK_ACTIONS,
   CALLBACK_PREFIXES,
+  SCENE_IDS,
+  VALIDATION_PATTERNS,
   UI_MESSAGES,
   APP_CONFIG,
   SYSTEM_ERROR_MESSAGES,
@@ -19,31 +28,14 @@ import {
 
 const DEFAULT_TIMEZONE = APP_CONFIG.DEFAULT_TIMEZONE;
 
-type SessionCreationData = {
-  sessionId: string;
-  startDate: string;
-  morningTime: string;
-  eveningTime: string;
-  timezone: string;
-};
-
-type NotificationData = {
-  session_id: string;
-  notification_date: string;
-  notification_type:
-    | typeof APP_CONFIG.NOTIFICATION_TYPES.MORNING
-    | typeof APP_CONFIG.NOTIFICATION_TYPES.EVENING;
-  notification_time_utc: string;
-  is_clicked: boolean;
-};
-
 const checkForCancellation = (data: string): boolean => {
-  return data.startsWith('/');
+  return VALIDATION_PATTERNS.COMMAND.test(data);
 };
 
 const buildFormMessage = (
   morningTime?: string,
   eveningTime?: string,
+  todayClaimStatus?: boolean,
   currentStepMessage?: string,
 ): string => {
   let message = '';
@@ -54,6 +46,10 @@ const buildFormMessage = (
 
   if (eveningTime) {
     message += `\n${UI_MESSAGES.EVENING_TIME_SELECTED(eveningTime)}`;
+  }
+
+  if (typeof todayClaimStatus === 'boolean') {
+    message += `\n${todayClaimStatus ? UI_MESSAGES.TODAY_CLAIMED_SELECTED : UI_MESSAGES.TODAY_NOT_CLAIMED_SELECTED}`;
   }
 
   if (currentStepMessage) {
@@ -82,10 +78,10 @@ const updateFormMessage = async (
 };
 
 const updateFormStatus = async (ctx: MyContext, statusMessage: string): Promise<void> => {
-  const { morningTime, eveningTime } = ctx.scene.state;
+  const { morningTime, eveningTime, todayClaimStatus } = ctx.scene.state;
 
-  if (morningTime && eveningTime) {
-    const message = buildFormMessage(morningTime, eveningTime, statusMessage);
+  if (morningTime && eveningTime && typeof todayClaimStatus === 'boolean') {
+    const message = buildFormMessage(morningTime, eveningTime, todayClaimStatus, statusMessage);
     await updateFormMessage(ctx, message);
   }
 };
@@ -106,8 +102,8 @@ const handleCancellation = async (ctx: MyContext): Promise<void> => {
   await ctx.scene.leave();
 };
 
-const createNotificationData = (data: SessionCreationData): NotificationData[] => {
-  const notifications: NotificationData[] = [];
+const createNotificationData = (data: SessionCreationData): NotificationRecord[] => {
+  const notifications: NotificationRecord[] = [];
 
   for (let i = 0; i < APP_CONFIG.SESSION_DURATION_DAYS; i++) {
     const date = DateTime.fromISO(data.startDate).plus({ days: i }).toISODate();
@@ -116,15 +112,20 @@ const createNotificationData = (data: SessionCreationData): NotificationData[] =
       throw new Error(`Invalid date calculation for day ${i} from ${data.startDate}`);
     }
 
+    const isTodayMorning = i === 0;
+    const isTodayMorningClaimed = isTodayMorning && data.todayClaimStatus;
+
     notifications.push(
       {
+        notification_id: '',
         session_id: data.sessionId,
         notification_date: date,
         notification_type: APP_CONFIG.NOTIFICATION_TYPES.MORNING,
         notification_time_utc: toUTC(date, data.morningTime, data.timezone),
-        is_clicked: false,
+        is_clicked: isTodayMorningClaimed,
       },
       {
+        notification_id: '',
         session_id: data.sessionId,
         notification_date: date,
         notification_type: APP_CONFIG.NOTIFICATION_TYPES.EVENING,
@@ -138,8 +139,14 @@ const createNotificationData = (data: SessionCreationData): NotificationData[] =
 };
 
 const validateSessionData = (ctx: MyContext): boolean => {
-  const { timezone, morningTime, eveningTime, startDate } = ctx.scene.state;
-  return !!(timezone && morningTime && eveningTime && startDate);
+  const { timezone, morningTime, eveningTime, startDate, todayClaimStatus } = ctx.scene.state;
+  return !!(
+    timezone &&
+    morningTime &&
+    eveningTime &&
+    startDate &&
+    typeof todayClaimStatus === 'boolean'
+  );
 };
 
 const processSessionCreation = async (ctx: MyContext): Promise<void> => {
@@ -154,7 +161,7 @@ const processSessionCreation = async (ctx: MyContext): Promise<void> => {
       return;
     }
 
-    const { morningTime, eveningTime, startDate } = ctx.scene.state;
+    const { morningTime, eveningTime, startDate, todayClaimStatus } = ctx.scene.state;
 
     await updateFormStatus(ctx, UI_MESSAGES.SESSION_PROCESSING);
 
@@ -183,6 +190,8 @@ const processSessionCreation = async (ctx: MyContext): Promise<void> => {
       morningTime: morningTime!,
       eveningTime: eveningTime!,
       timezone: DEFAULT_TIMEZONE,
+      userId: ctx.from.id,
+      todayClaimStatus: todayClaimStatus!,
     };
 
     const notifications = createNotificationData(sessionData);
@@ -216,8 +225,46 @@ const handleConfirmationStep = async (ctx: MyContext): Promise<void> => {
   await ctx.scene.leave();
 };
 
+const handleTodayClaimStep = async (ctx: MyContext): Promise<void> => {
+  if (!hasCallbackData(ctx)) {
+    if (hasMessageText(ctx) && checkForCancellation(ctx.message.text)) {
+      return handleCancellation(ctx);
+    }
+    await ctx.reply(UI_MESSAGES.USE_TODAY_CREDIT_BUTTONS);
+    return;
+  }
+
+  const data = ctx.callbackQuery.data;
+  const { morningTime, eveningTime } = ctx.scene.state;
+
+  if (data === CALLBACK_ACTIONS.TODAY_CLAIMED) {
+    ctx.scene.state.todayClaimStatus = true;
+    const formMessage = buildFormMessage(
+      morningTime,
+      eveningTime,
+      true,
+      UI_MESSAGES.FORM_CONFIRMATION,
+    );
+    await updateFormMessage(ctx, formMessage, confirmKeyboard);
+    ctx.wizard.next();
+  } else if (data === CALLBACK_ACTIONS.TODAY_NOT_CLAIMED) {
+    ctx.scene.state.todayClaimStatus = false;
+    const formMessage = buildFormMessage(
+      morningTime,
+      eveningTime,
+      false,
+      UI_MESSAGES.FORM_CONFIRMATION,
+    );
+    await updateFormMessage(ctx, formMessage, confirmKeyboard);
+    ctx.wizard.next();
+  } else {
+    await ctx.reply(UI_MESSAGES.USE_TODAY_CREDIT_BUTTONS);
+    return;
+  }
+};
+
 export const startSession = new Scenes.WizardScene<MyContext>(
-  'start_session',
+  SCENE_IDS.START_SESSION,
 
   async ctx => {
     ctx.scene.state = {
@@ -227,6 +274,7 @@ export const startSession = new Scenes.WizardScene<MyContext>(
       eveningTime: undefined,
       startDate: undefined,
       formMessageId: undefined,
+      todayClaimStatus: undefined,
     };
 
     const message = await ctx.reply(UI_MESSAGES.SELECT_MORNING_TIME, timeKeyboard('MORN'));
@@ -252,6 +300,7 @@ export const startSession = new Scenes.WizardScene<MyContext>(
 
     const formMessage = buildFormMessage(
       ctx.scene.state.morningTime,
+      undefined,
       undefined,
       UI_MESSAGES.SELECT_EVENING_TIME,
     );
@@ -290,11 +339,18 @@ export const startSession = new Scenes.WizardScene<MyContext>(
 
     ctx.scene.state.startDate = startDate;
 
-    const formMessage = buildFormMessage(morningTime, eveningTime, UI_MESSAGES.FORM_CONFIRMATION);
+    const formMessage = buildFormMessage(
+      morningTime,
+      eveningTime,
+      undefined,
+      UI_MESSAGES.TODAY_CREDIT_QUESTION,
+    );
 
-    await updateFormMessage(ctx, formMessage, confirmKeyboard);
+    await updateFormMessage(ctx, formMessage, todayClaimKeyboard);
     return ctx.wizard.next();
   },
+
+  handleTodayClaimStep,
 
   handleConfirmationStep,
 );

@@ -45,6 +45,8 @@ export const DEV_LOGS = {
     command: string,
   ) => `[명령어] ${firstName}(@${username || 'unknown'}, ID:${userId}, 채팅:${chatId}): ${command}`,
   WEBHOOK_UNKNOWN_UPDATE: (updateId: number) => `[알 수 없는 업데이트] Update ID: ${updateId}`,
+
+  KEYBOARD_REMOVAL_FAILED: '키보드 제거 실패, 새 메시지로 응답',
 } as const;
 
 export const SYSTEM_ERROR_MESSAGES = {

@@ -2,12 +2,13 @@ import express from 'express';
 import { WEBHOOK_URL, WEBHOOK_PORT, WEBHOOK_PATH } from '../config';
 import { bot } from '../bot';
 import { WEBHOOK_MESSAGES, DEV_LOGS, SYSTEM_ERROR_MESSAGES } from '../constants';
+import { TelegramUpdate } from '../types';
 
 const app = express();
 
 app.use(express.json());
 
-const logTelegramUpdate = (update: any): void => {
+const logTelegramUpdate = (update: TelegramUpdate): void => {
   try {
     const updateId = update.update_id;
 

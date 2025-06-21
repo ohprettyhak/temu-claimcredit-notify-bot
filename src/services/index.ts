@@ -9,5 +9,11 @@ export {
   deleteSession,
   markNotificationClaimed,
 } from './database';
-export { timeKeyboard, confirmKeyboard, claimButtons, createSessionButtons } from './keyboards';
+export {
+  timeKeyboard,
+  confirmKeyboard,
+  todayClaimKeyboard,
+  claimButtons,
+  createSessionButtons,
+} from './keyboards';
 export { toUTC } from './time';

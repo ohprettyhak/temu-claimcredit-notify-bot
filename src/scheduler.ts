@@ -2,7 +2,7 @@ import cron from 'node-cron';
 import { DateTime } from 'luxon';
 import { bot } from './bot';
 import { supabase } from './db';
-import { NotificationViewData } from './types';
+import { NotificationViewData, NotificationType } from './types';
 import { getSessionUser, updateNotificationSentTime, claimButtons } from './services';
 import { UI_MESSAGES, APP_CONFIG, SYSTEM_ERROR_MESSAGES, DEV_LOGS } from './constants';
 
@@ -25,9 +25,7 @@ const getDueNotifications = async (now: DateTime): Promise<NotificationViewData[
 
 const sendNotificationMessage = async (
   chatId: number,
-  notificationType:
-    | typeof APP_CONFIG.NOTIFICATION_TYPES.MORNING
-    | typeof APP_CONFIG.NOTIFICATION_TYPES.EVENING,
+  notificationType: NotificationType,
   notificationId: string,
 ): Promise<void> => {
   const message =
@@ -51,9 +49,7 @@ const processNotification = async (
 
     await sendNotificationMessage(
       userId,
-      notification.notification_type as
-        | typeof APP_CONFIG.NOTIFICATION_TYPES.MORNING
-        | typeof APP_CONFIG.NOTIFICATION_TYPES.EVENING,
+      notification.notification_type as NotificationType,
       notification.notification_id,
     );
 
@@ -62,13 +58,10 @@ const processNotification = async (
       await updateNotificationSentTime(notification.notification_id, currentTimeISO);
     }
 
-    console.log(DEV_LOGS.NOTIFICATION_SENT_SUCCESS(String(notification.notification_id)));
+    console.log(DEV_LOGS.NOTIFICATION_SENT_SUCCESS(notification.notification_id));
   } catch (error) {
     console.error(
-      UI_MESSAGES.NOTIFICATION_SEND_ERROR(
-        String(notification.session_id),
-        String(notification.notification_id),
-      ),
+      UI_MESSAGES.NOTIFICATION_SEND_ERROR(notification.session_id, notification.notification_id),
       error,
     );
   }

@@ -1,5 +1,5 @@
 import { Markup } from 'telegraf';
-import { MyContext } from '../types';
+import { MyContext, hasCallbackData } from '../types';
 import {
   markNotificationClaimed,
   deleteSession,
@@ -7,13 +7,29 @@ import {
   createSessionButtons,
 } from '../services';
 import { withErrorHandling, withCallbackValidation, withUserValidation } from '../utils';
-import { UI_MESSAGES, SYSTEM_ERROR_MESSAGES, ACTION_NAMES } from '../constants';
+import {
+  UI_MESSAGES,
+  SYSTEM_ERROR_MESSAGES,
+  ACTION_NAMES,
+  CALLBACK_PREFIXES,
+  DEV_LOGS,
+} from '../constants';
 
 const _handleClaimAction = async (ctx: MyContext): Promise<void> => {
-  const data = (ctx.callbackQuery as any)?.data;
-  const notificationId = data.replace('claim_', '');
+  if (!hasCallbackData(ctx)) {
+    return;
+  }
+
+  const notificationId = ctx.callbackQuery.data.replace(CALLBACK_PREFIXES.CLAIM, '');
   await markNotificationClaimed(notificationId);
   await ctx.answerCbQuery(UI_MESSAGES.CREDIT_CLAIMED);
+
+  try {
+    await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
+  } catch (editError) {
+    console.log(DEV_LOGS.KEYBOARD_REMOVAL_FAILED);
+  }
+
   await ctx.reply(UI_MESSAGES.CREDIT_CLAIMED);
 };
 
@@ -23,8 +39,11 @@ export const handleClaimAction = withErrorHandling(
 );
 
 const _handleDeleteSessionAction = async (ctx: MyContext): Promise<void> => {
-  const data = (ctx.callbackQuery as any)?.data;
-  const sessionId = data.replace('delete_session_', '');
+  if (!hasCallbackData(ctx)) {
+    return;
+  }
+
+  const sessionId = ctx.callbackQuery.data.replace(CALLBACK_PREFIXES.DELETE_SESSION, '');
   await deleteSession(sessionId);
   await ctx.answerCbQuery(UI_MESSAGES.SESSION_DELETED);
 

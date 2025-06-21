@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { MyContext } from '../types';
+import { MyContext, NotificationType } from '../types';
 import { getUserSessions, getNotificationStatus } from '../services';
 import { UI_MESSAGES, APP_CONFIG, SYSTEM_ERROR_MESSAGES } from '../constants';
 import { withErrorHandling, withUserValidation } from '../utils';
@@ -22,7 +22,7 @@ const generateStatusMessage = async (userId: number): Promise<string> => {
     statusMessage += `\n🕐 ${session.morning_notification_time} / ${session.evening_notification_time}`;
     statusMessage += `\n📆 ${startDate.toFormat('yyyy-MM-dd')} ~ ${endDate.toFormat('yyyy-MM-dd')}`;
 
-    let checkedDays = 0;
+    let completedDays = 0;
     let totalDays = 0;
 
     for (let date = startDate; date <= endDate; date = date.plus({ days: 1 })) {
@@ -34,20 +34,20 @@ const generateStatusMessage = async (userId: number): Promise<string> => {
       const morningClaimed = await getNotificationStatus(
         session.session_id,
         dateStr,
-        APP_CONFIG.NOTIFICATION_TYPES.MORNING,
+        APP_CONFIG.NOTIFICATION_TYPES.MORNING as NotificationType,
       );
       const eveningClaimed = await getNotificationStatus(
         session.session_id,
         dateStr,
-        APP_CONFIG.NOTIFICATION_TYPES.EVENING,
+        APP_CONFIG.NOTIFICATION_TYPES.EVENING as NotificationType,
       );
 
-      if (morningClaimed && eveningClaimed) {
-        checkedDays++;
+      if (morningClaimed || eveningClaimed) {
+        completedDays++;
       }
     }
 
-    statusMessage += `\n✅ 완료: ${checkedDays}/${totalDays}일`;
+    statusMessage += `\n✅ 완료: ${completedDays}/${totalDays}일`;
   }
 
   return statusMessage;

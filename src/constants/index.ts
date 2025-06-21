@@ -7,5 +7,11 @@ export {
   VALIDATION_ERROR_MESSAGES,
 } from './system-messages';
 
-export { COMMANDS, CALLBACK_ACTIONS, CALLBACK_PREFIXES } from './commands';
+export {
+  COMMANDS,
+  CALLBACK_ACTIONS,
+  CALLBACK_PREFIXES,
+  SCENE_IDS,
+  VALIDATION_PATTERNS,
+} from './commands';
 export { APP_CONFIG } from './config';

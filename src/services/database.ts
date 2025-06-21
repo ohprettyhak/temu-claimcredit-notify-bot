@@ -1,5 +1,5 @@
 import { supabase } from '../db';
-import { DatabaseSession } from '../types';
+import { DatabaseSession, NotificationType } from '../types';
 import { UI_MESSAGES } from '../constants';
 
 export const getUserSessions = async (userId: number): Promise<DatabaseSession[]> => {
@@ -18,7 +18,7 @@ export const getUserSessions = async (userId: number): Promise<DatabaseSession[]
 export const getNotificationStatus = async (
   sessionId: string,
   date: string,
-  notificationType: string,
+  notificationType: NotificationType,
 ): Promise<boolean> => {
   const { data: notification } = await supabase
     .from('notifications')

@@ -5,10 +5,6 @@ export const APP_CONFIG = {
     MORNING: 'morning',
     EVENING: 'evening',
   },
-  STATUS_ICONS: {
-    CLAIMED: '✅',
-    NOT_CLAIMED: '❌',
-  },
   URLS: {
     TEMU: 'https://www.temu.com/s/',
   },

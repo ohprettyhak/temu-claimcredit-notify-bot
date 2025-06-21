@@ -24,9 +24,14 @@ Temu 크레딧백 알림 봇이에요.
   EVENING_TIME_SELECTED: (time: string) => `✅ 저녁 시간: ${time}`,
   FORM_CONFIRMATION: '📝 위 설정으로 알림을 시작할게요.',
 
+  TODAY_CREDIT_QUESTION: '💰 오늘 이미 크레딧백을 수령하셨나요?',
+  TODAY_CLAIMED_SELECTED: '✅ 오늘 크레딧백을 수령했다고 기록됐어요.',
+  TODAY_NOT_CLAIMED_SELECTED: '📝 오늘부터 알림을 시작할게요.',
+
   USE_BUTTONS_FOR_MORNING: '🌅 아침 알림 시간은 버튼으로 선택해주세요.',
   USE_BUTTONS_FOR_EVENING: '🌙 저녁 알림 시간은 버튼으로 선택해주세요.',
   USE_CONFIRMATION_BUTTONS: '👆 확인 또는 취소 버튼을 눌러주세요.',
+  USE_TODAY_CREDIT_BUTTONS: '👆 오늘 크레딧 수령 여부를 선택해주세요.',
 
   SESSION_PROCESSING: '⏳ 세션을 생성하고 있어요...',
   SESSION_SUCCESS: '🎉 세션이 등록되었어요! 매일 알림해드릴게요.',
@@ -66,6 +71,8 @@ export const BUTTON_TEXTS = {
   CLAIMED: '✅ 수령 완료',
   GO_TO_TEMU: '🔗 Temu로 이동',
   SESSION_PREFIX: '📅 세션 #',
+  TODAY_CLAIMED: '✅ 네, 수령했어요',
+  TODAY_NOT_CLAIMED: '❌ 아니요, 안했어요',
 } as const;
 
 export const ACTION_NAMES = {
