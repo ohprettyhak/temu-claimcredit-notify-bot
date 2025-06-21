@@ -41,7 +41,9 @@ const statusHandler = async (ctx: MyContext): Promise<void> => {
         APP_CONFIG.NOTIFICATION_TYPES.MORNING,
       );
 
-      message += `${formatSessionInfo(session, i, currentDay, isClicked)}\n`;
+      const sessionNumber = i + 1;
+      const dayNumber = Math.floor(currentDay);
+      message += `${formatSessionInfo(session, sessionNumber, dayNumber, isClicked)}\n`;
     }
 
     await ctx.reply(message);

@@ -28,6 +28,15 @@ Temu 크레딧백 알림 봇이에요.
 – 알림 오면 "✅ 수령 완료" 버튼 눌러주세요
 – /cancel_session으로 언제든 멈출 수 있어요`,
 
+  HELP_MESSAGE: `📋 사용 가능한 명령어
+
+🚀 /start_session - 새로운 알림 세션 시작
+📊 /status - 현재 세션 상태 확인
+❌ /cancel_session - 진행 중인 세션 취소
+❓ /help - 이 도움말 보기
+
+💡 팁: 매일 아침/저녁 시간에 테무 크레딧백 수령 알림을 받을 수 있어요!`,
+
   COMMAND_START_SESSION: '알림 세션 시작',
   COMMAND_STATUS: '상태 확인',
   COMMAND_CANCEL_SESSION: '세션 취소',
@@ -42,7 +51,7 @@ Temu 크레딧백 알림 봇이에요.
 
   USE_BUTTONS_FOR_MORNING: '아침 알림 시간은 버튼으로 골라주세요.',
   USE_BUTTONS_FOR_EVENING: '저녁 알림 시간은 버튼으로 골라주세요.',
-  USE_CONFIRMATION_BUTTONS: '확인 버튼을 눌러주세요.',
+  USE_CONFIRMATION_BUTTONS: '확인 또는 취소 버튼을 눌러주세요.',
   MISSING_INFO: '정보가 부족해요. /start_session부터 다시 시작해주세요.',
   MISSING_SESSION_DATA: '세션 정보가 부족해요. /start_session부터 다시 시작해주세요.',
 
@@ -54,7 +63,7 @@ Temu 크레딧백 알림 봇이에요.
   SESSIONS_FETCH_FAILED: '세션 정보 조회 실패했어요.',
   NO_ACTIVE_SESSIONS: '활성 세션이 없어요.',
   ACTIVE_SESSIONS: '현재 활성 세션이에요.',
-  STATUS_ERROR: '상태 확인 중 오류가 발생했어요.',
+  STATUS_ERROR: '상태 조회 중 오류가 발생했어요.',
 
   NO_SESSIONS_TO_CANCEL: '취소할 세션이 없어요.',
   SELECT_SESSION_TO_CANCEL: '취소할 세션을 골라주세요.',
@@ -76,6 +85,14 @@ Temu 크레딧백 알림 봇이에요.
   SESSION_SUCCESS: '✅ 세션이 등록됐어요! 매일 알림 해드릴게요.',
   SESSION_CREATION_ERROR: '❌ 세션 생성에 실패했어요.',
   SESSION_CANCELLED_STATUS: '❌ 세션이 취소됐어요.',
+
+  WEBHOOK_SERVER_STARTED: '웹훅 서버가 시작됐어요.',
+  WEBHOOK_SET_SUCCESS: '웹훅 설정이 완료됐어요.',
+  WEBHOOK_SET_FAILED: '웹훅 설정에 실패했어요.',
+  WEBHOOK_HEALTH_CHECK: '웹훅 서버가 정상 작동 중이에요.',
+
+  CREDIT_CLAIMED: '크레딧백을 수령했어요! 🎉',
+  SESSION_DELETED: '세션이 삭제됐어요.',
 } as const;
 
 export const ACTION_NAMES = {

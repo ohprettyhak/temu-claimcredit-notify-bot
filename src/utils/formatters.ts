@@ -1,26 +1,34 @@
 import { APP_CONFIG } from '../constants';
 import { DatabaseSession } from '../types';
 
+const FORMAT_CONSTANTS = {
+  DAY_SUFFIX: '일차',
+  DAY_SEPARATOR: '/',
+  DAY_TOTAL_SUFFIX: '일',
+  SESSION_PREFIX: '• #',
+  SESSION_DATE_SEPARATOR: '~',
+  SESSION_STATUS_SEPARATOR: ' — ',
+  SESSION_CLAIMED_TEXT: '수령:',
+} as const;
+
 type SessionInfo = Pick<DatabaseSession, 'session_id' | 'start_date' | 'end_date'>;
 
-export const formatDayProgress = (currentDay: number): string => {
-  const dayNumber = Math.floor(currentDay);
-  return `${dayNumber}일차/${APP_CONFIG.SESSION_DURATION_DAYS}일`;
+const formatDayProgress = (dayNumber: number): string => {
+  return `${dayNumber}${FORMAT_CONSTANTS.DAY_SUFFIX}${FORMAT_CONSTANTS.DAY_SEPARATOR}${APP_CONFIG.SESSION_DURATION_DAYS}${FORMAT_CONSTANTS.DAY_TOTAL_SUFFIX}`;
 };
 
-export const getStatusIcon = (isClicked: boolean): string => {
+const formatStatusText = (isClicked: boolean): string => {
   return isClicked ? APP_CONFIG.STATUS_ICONS.CLAIMED : APP_CONFIG.STATUS_ICONS.NOT_CLAIMED;
 };
 
 export const formatSessionInfo = (
   session: SessionInfo,
-  index: number,
+  sessionNumber: number,
   currentDay: number,
   isClicked: boolean,
 ): string => {
   const dayText = formatDayProgress(currentDay);
-  const statusText = getStatusIcon(isClicked);
-  const sessionNumber = index + 1;
+  const statusText = formatStatusText(isClicked);
 
-  return `• #${sessionNumber} (${session.start_date}~${session.end_date}) — ${dayText} — 수령: ${statusText}`;
+  return `${FORMAT_CONSTANTS.SESSION_PREFIX}${sessionNumber} (${session.start_date}${FORMAT_CONSTANTS.SESSION_DATE_SEPARATOR}${session.end_date})${FORMAT_CONSTANTS.SESSION_STATUS_SEPARATOR}${dayText}${FORMAT_CONSTANTS.SESSION_STATUS_SEPARATOR}${FORMAT_CONSTANTS.SESSION_CLAIMED_TEXT} ${statusText}`;
 };

@@ -68,7 +68,7 @@ export const confirmKeyboard = Markup.inlineKeyboard([
 export const claimButtons = (notificationId: string): ReturnType<typeof Markup.inlineKeyboard> => {
   return Markup.inlineKeyboard([
     [
-      Markup.button.callback(BUTTON_TEXT.CLAIMED, `${CALLBACK_ACTIONS.CLAIM}_${notificationId}`),
+      Markup.button.callback(BUTTON_TEXT.CLAIMED, `claim_${notificationId}`),
       Markup.button.url(BUTTON_TEXT.GO_TO_TEMU, TEMU_URL),
     ],
   ]);

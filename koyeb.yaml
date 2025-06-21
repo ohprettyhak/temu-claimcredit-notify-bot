@@ -1,0 +1,29 @@
+name: temu-claimcredit-notify-bot
+services:
+  - name: webhook-server
+    git:
+      repository: github.com/ohprettyhak/temu-claimcredit-notify-bot
+      branch: main
+      build_command: pnpm install && pnpm build
+      run_command: pnpm start:webhook
+    instance_type: nano
+    regions:
+      - fra
+    ports:
+      - port: 8000
+        protocol: http
+    env:
+      - key: NODE_ENV
+        value: production
+      - key: WEBHOOK_PORT
+        value: "8000"
+      - key: WEBHOOK_PATH
+        value: "/webhook"
+    health_checks:
+      - path: /health
+        port: 8000
+        protocol: http
+        interval_seconds: 30
+        timeout_seconds: 10
+        healthy_threshold: 2
+        unhealthy_threshold: 3 

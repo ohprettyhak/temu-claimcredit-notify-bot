@@ -1,5 +1,6 @@
 import { Telegraf, session, Scenes } from 'telegraf';
-import { TELEGRAM_TOKEN } from './config';
+import express from 'express';
+import { TELEGRAM_TOKEN, WEBHOOK_URL, WEBHOOK_PORT, WEBHOOK_PATH, NODE_ENV } from './config';
 import { supabase } from './db';
 import { startSession } from './handlers/startSession';
 import statusHandler from './handlers/status';
@@ -11,139 +12,138 @@ import { COMMANDS, MESSAGES, ERROR_MESSAGES, DEV_LOGS, ACTION_NAMES } from './co
 
 export const bot = new Telegraf<MyContext>(TELEGRAM_TOKEN);
 const stage = new Scenes.Stage<MyContext>([startSession]);
+const app = express();
+
+app.use(express.json());
 
 bot.use(session());
 bot.use(stage.middleware());
 
-const setupBotCommands = async (): Promise<void> => {
-  await bot.telegram.setMyCommands([
-    { command: COMMANDS.START_SESSION, description: MESSAGES.COMMAND_START_SESSION },
-    { command: COMMANDS.STATUS, description: MESSAGES.COMMAND_STATUS },
-    { command: COMMANDS.CANCEL_SESSION, description: MESSAGES.COMMAND_CANCEL_SESSION },
-    { command: COMMANDS.HELP, description: MESSAGES.COMMAND_HELP },
-  ]);
-};
+const initializeBot = (): void => {
+  bot.command(COMMANDS.HELP, ctx => ctx.reply(MESSAGES.HELP_MESSAGE));
+  bot.command(COMMANDS.START_SESSION, ctx => ctx.scene.enter('start_session'));
+  bot.command(COMMANDS.STATUS, statusHandler);
+  bot.command(COMMANDS.CANCEL_SESSION, cancelHandler);
 
-const handleCommandError = (command: string, error: unknown): void => {
-  console.error(ERROR_MESSAGES.COMMAND_ERROR(command), error);
-};
+  bot.action(ACTION_NAMES.CANCEL_SESSION, cancelHandler);
 
-const handleActionError = (action: string, error: unknown): void => {
-  console.error(ERROR_MESSAGES.ACTION_ERROR(action), error);
-};
-
-const safeEditMessage = async (ctx: MyContext, text: string): Promise<void> => {
-  try {
-    await ctx.editMessageText(text);
-  } catch (editError: unknown) {
-    if (editError && typeof editError === 'object' && 'response' in editError) {
-      const telegramError = editError as { response?: { error_code?: number } };
-      if (telegramError.response?.error_code !== 400) {
-        throw editError;
+  bot.action(/^claim_/, async ctx => {
+    try {
+      if (!ctx.callbackQuery || !('data' in ctx.callbackQuery)) {
+        await ctx.answerCbQuery(MESSAGES.PROCESSING_ERROR);
+        return;
       }
-    } else {
-      throw editError;
+
+      const notificationId = ctx.callbackQuery.data.replace('claim_', '');
+      await markNotificationClaimed(notificationId);
+      await ctx.answerCbQuery(MESSAGES.CREDIT_CLAIMED);
+      await ctx.reply(MESSAGES.CREDIT_CLAIMED);
+    } catch (error) {
+      console.error(ERROR_MESSAGES.ACTION_ERROR(ACTION_NAMES.CLAIM_NOTIFICATION), error);
+      await ctx.answerCbQuery(MESSAGES.PROCESSING_ERROR);
     }
+  });
+
+  bot.action(/^delete_session_/, async ctx => {
+    try {
+      if (!ctx.callbackQuery || !('data' in ctx.callbackQuery)) {
+        await ctx.answerCbQuery(MESSAGES.PROCESSING_ERROR);
+        return;
+      }
+
+      const sessionId = ctx.callbackQuery.data.replace('delete_session_', '');
+      await deleteSession(sessionId);
+      await ctx.answerCbQuery(MESSAGES.SESSION_DELETED);
+      await ctx.reply(MESSAGES.SESSION_DELETED);
+    } catch (error) {
+      console.error(ERROR_MESSAGES.ACTION_ERROR(ERROR_MESSAGES.DELETE_SESSION_ACTION), error);
+      await ctx.answerCbQuery(MESSAGES.PROCESSING_ERROR);
+    }
+  });
+
+  bot.catch(error => {
+    console.error(ERROR_MESSAGES.GLOBAL_BOT_ERROR, error);
+  });
+};
+
+const setupWebhook = async (): Promise<void> => {
+  try {
+    const webhookUrl = `${WEBHOOK_URL}${WEBHOOK_PATH}`;
+    await bot.telegram.setWebhook(webhookUrl);
+    console.log(DEV_LOGS.WEBHOOK_URL_SET(webhookUrl));
+  } catch (error) {
+    console.error(ERROR_MESSAGES.WEBHOOK_SETUP_ERROR, error);
+    throw error;
   }
 };
 
-bot.start(async ctx => {
-  try {
-    await ctx.reply(MESSAGES.WELCOME);
-  } catch (error) {
-    handleCommandError('/start', error);
-  }
-});
+const setupRoutes = (): void => {
+  app.get('/health', (req, res) => {
+    res.json({ status: 'ok', message: MESSAGES.WEBHOOK_HEALTH_CHECK });
+  });
 
-bot.command(COMMANDS.HELP, async ctx => {
-  try {
-    await ctx.reply(MESSAGES.HELP, { parse_mode: 'HTML' });
-  } catch (error) {
-    handleCommandError('/help', error);
-  }
-});
-
-bot.command(COMMANDS.START_SESSION, async ctx => {
-  try {
-    await ctx.scene.enter('startSession');
-  } catch (error) {
-    handleCommandError('/start_session', error);
-  }
-});
-
-bot.command(COMMANDS.STATUS, async ctx => {
-  try {
-    await statusHandler(ctx);
-  } catch (error) {
-    handleCommandError('/status', error);
-  }
-});
-
-bot.command(COMMANDS.CANCEL_SESSION, async ctx => {
-  try {
-    await cancelHandler(ctx);
-  } catch (error) {
-    handleCommandError('/cancel_session', error);
-  }
-});
-
-bot.action(/CLAIM_(.+)/, async ctx => {
-  try {
-    const notificationId = ctx.match[1];
-
-    const { data: notification, error } = await supabase
-      .from('notifications')
-      .select('session_id,notification_date')
-      .eq('notification_id', notificationId)
-      .single();
-
-    if (error || !notification) {
-      await ctx.answerCbQuery(MESSAGES.NOTIFICATION_NOT_FOUND);
-      return;
+  app.post(WEBHOOK_PATH, (req, res) => {
+    try {
+      console.log(DEV_LOGS.WEBHOOK_REQUEST_RECEIVED(req.method, req.path));
+      bot.handleUpdate(req.body);
+      res.status(200).send('OK');
+    } catch (error) {
+      console.error(ERROR_MESSAGES.WEBHOOK_REQUEST_ERROR, error);
+      res.status(500).send('Internal Server Error');
     }
+  });
 
-    await markNotificationClaimed(notificationId);
-    await ctx.answerCbQuery(MESSAGES.MARKED_AS_CLAIMED);
-  } catch (error) {
-    handleActionError(ACTION_NAMES.CLAIM_NOTIFICATION, error);
-    await ctx.answerCbQuery(MESSAGES.PROCESSING_ERROR);
-  }
-});
+  app.use((req, res) => {
+    res.status(404).json({ error: 'Not Found' });
+  });
+};
 
-bot.action(/CANCEL_(.+)/, async ctx => {
-  try {
-    const sessionId = ctx.match[1];
+const startServer = (): void => {
+  app.listen(WEBHOOK_PORT, () => {
+    console.log(DEV_LOGS.WEBHOOK_SERVER_LISTENING(WEBHOOK_PORT));
+  });
+};
 
-    const { data: existingSession, error: sessionError } = await supabase
-      .from('sessions')
-      .select('session_id')
-      .eq('session_id', sessionId)
-      .single();
+const startPolling = async (): Promise<void> => {
+  await bot.launch();
+  console.log(DEV_LOGS.BOT_RUNNING);
+};
 
-    if (sessionError || !existingSession) {
-      await ctx.answerCbQuery(MESSAGES.SESSION_NOT_FOUND);
-      return;
+const gracefulShutdown = (): void => {
+  const shutdown = async (signal: string): Promise<void> => {
+    console.log(ERROR_MESSAGES.SHUTDOWN_SIGNAL_RECEIVED(signal));
+
+    try {
+      if (NODE_ENV === 'production') {
+        await supabase.removeAllChannels();
+      } else {
+        bot.stop(signal);
+      }
+      process.exit(0);
+    } catch (error) {
+      console.error(ERROR_MESSAGES.SHUTDOWN_ERROR, error);
+      process.exit(1);
     }
+  };
 
-    await deleteSession(sessionId);
-    await ctx.answerCbQuery(MESSAGES.SESSION_CANCELLED);
-    await safeEditMessage(ctx, MESSAGES.SESSION_CANCELLED);
-  } catch (error) {
-    handleActionError(ACTION_NAMES.CANCEL_SESSION, error);
-    await ctx.answerCbQuery(MESSAGES.PROCESSING_ERROR);
-  }
-});
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+};
 
-bot.catch(error => {
-  console.error(ERROR_MESSAGES.GLOBAL_BOT_ERROR, error);
-});
-
-const initializeBot = async (): Promise<void> => {
+const main = async (): Promise<void> => {
   try {
-    await setupBotCommands();
+    initializeBot();
     scheduleJobs();
+    gracefulShutdown();
 
-    await bot.launch();
+    if (NODE_ENV === 'production') {
+      setupRoutes();
+      await setupWebhook();
+      startServer();
+    } else {
+      await startPolling();
+    }
+
     console.log(DEV_LOGS.BOT_RUNNING);
   } catch (error) {
     console.error(ERROR_MESSAGES.BOT_INIT_FAILED, error);
@@ -151,7 +151,4 @@ const initializeBot = async (): Promise<void> => {
   }
 };
 
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
-
-initializeBot();
+main();
