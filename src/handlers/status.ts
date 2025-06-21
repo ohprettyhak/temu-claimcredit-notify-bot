@@ -1,7 +1,6 @@
 import { DateTime } from 'luxon';
 import { MyContext } from '../types';
-import { getUserSessions, getNotificationStatus } from '../services/database';
-import { formatSessionInfo } from '../utils/formatters';
+import { getUserSessions, getNotificationStatus, formatSessionInfo } from '../services';
 import { MESSAGES, APP_CONFIG, ERROR_MESSAGES } from '../constants';
 
 const DEFAULT_TIMEZONE = APP_CONFIG.DEFAULT_TIMEZONE;

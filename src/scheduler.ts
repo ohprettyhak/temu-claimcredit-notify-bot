@@ -1,10 +1,9 @@
 import cron from 'node-cron';
 import { DateTime } from 'luxon';
-import { bot } from './index';
+import { bot } from './bot';
 import { supabase } from './db';
 import { NotificationViewData } from './types';
-import { getSessionUser, updateNotificationSentTime } from './services/database';
-import { claimButtons } from './services/keyboards';
+import { getSessionUser, updateNotificationSentTime, claimButtons } from './services';
 import { MESSAGES, APP_CONFIG, ERROR_MESSAGES, DEV_LOGS } from './constants';
 
 const getDueNotifications = async (now: DateTime): Promise<NotificationViewData[]> => {

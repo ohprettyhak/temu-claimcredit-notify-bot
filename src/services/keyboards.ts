@@ -73,3 +73,12 @@ export const claimButtons = (notificationId: string): ReturnType<typeof Markup.i
     ],
   ]);
 };
+
+export const createSessionButtons = (sessions: { session_id: string }[]) => {
+  return sessions.map((session, index) =>
+    Markup.button.callback(
+      `${BUTTON_TEXT.SESSION_PREFIX}${index + 1}`,
+      `delete_session_${session.session_id}`,
+    ),
+  );
+};

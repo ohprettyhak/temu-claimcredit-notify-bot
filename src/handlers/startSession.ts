@@ -1,8 +1,13 @@
 import { Scenes, Markup } from 'telegraf';
 import { DateTime } from 'luxon';
-import { confirmKeyboard, timeKeyboard } from '../services/keyboards';
-import { createUser, createSession, createNotifications } from '../services/database';
-import { toUTC } from '../services/time';
+import {
+  confirmKeyboard,
+  timeKeyboard,
+  createUser,
+  createSession,
+  createNotifications,
+  toUTC,
+} from '../services';
 import { hasCallbackData, hasMessageText, MyContext } from '../types';
 import {
   CALLBACK_ACTIONS,

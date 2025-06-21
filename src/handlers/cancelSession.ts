@@ -1,16 +1,7 @@
 import { Markup } from 'telegraf';
-import { MyContext, DatabaseSession } from '../types';
-import { getUserSessions } from '../services/database';
-import { MESSAGES, BUTTON_TEXT, ERROR_MESSAGES } from '../constants';
-
-const createSessionButtons = (sessions: DatabaseSession[]) => {
-  return sessions.map((session, index) =>
-    Markup.button.callback(
-      `${BUTTON_TEXT.SESSION_PREFIX}${index + 1}`,
-      `delete_session_${session.session_id}`,
-    ),
-  );
-};
+import { MyContext } from '../types';
+import { getUserSessions, createSessionButtons } from '../services';
+import { MESSAGES, ERROR_MESSAGES } from '../constants';
 
 const cancelSession = async (ctx: MyContext): Promise<void> => {
   try {
