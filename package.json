@@ -5,9 +5,9 @@
   "main": "dist/src/index.js",
   "scripts": {
     "build": "swc src -d dist --config-file .swcrc",
-    "start": "node dist/index.js",
-    "start:webhook": "NODE_ENV=production node dist/index.js",
-    "start:polling": "NODE_ENV=development node dist/index.js",
+    "start": "node dist/src/index.js",
+    "start:webhook": "NODE_ENV=production node dist/src/index.js",
+    "start:polling": "NODE_ENV=development node dist/src/index.js",
     "dev": "node -r @swc-node/register src/index.ts",
     "dev:webhook": "NODE_ENV=production node -r @swc-node/register src/index.ts"
   },
