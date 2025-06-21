@@ -7,7 +7,7 @@ const createSessionButtons = (sessions: DatabaseSession[]) => {
   return sessions.map((session, index) =>
     Markup.button.callback(
       `${BUTTON_TEXT.SESSION_PREFIX}${index + 1}`,
-      `CANCEL_${session.session_id}`,
+      `delete_session_${session.session_id}`,
     ),
   );
 };
