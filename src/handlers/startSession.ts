@@ -212,9 +212,8 @@ const handleConfirmationStep = async (ctx: MyContext): Promise<void> => {
 };
 
 export const startSession = new Scenes.WizardScene<MyContext>(
-  'startSession',
+  'start_session',
 
-  // Step 1: Morning time selection
   async ctx => {
     ctx.scene.state = {
       cursor: 0,
@@ -230,7 +229,6 @@ export const startSession = new Scenes.WizardScene<MyContext>(
     return ctx.wizard.next();
   },
 
-  // Step 2: Evening time selection
   async ctx => {
     if (!hasCallbackData(ctx)) {
       if (hasMessageText(ctx) && checkForCancellation(ctx.message.text)) {
@@ -257,7 +255,6 @@ export const startSession = new Scenes.WizardScene<MyContext>(
     return ctx.wizard.next();
   },
 
-  // Step 3: Confirmation
   async ctx => {
     if (!hasCallbackData(ctx)) {
       if (hasMessageText(ctx) && checkForCancellation(ctx.message.text)) {
@@ -294,6 +291,5 @@ export const startSession = new Scenes.WizardScene<MyContext>(
     return ctx.wizard.next();
   },
 
-  // Step 4: Final confirmation and creation
   handleConfirmationStep,
 );

@@ -20,6 +20,7 @@ bot.use(session());
 bot.use(stage.middleware());
 
 const initializeBot = (): void => {
+  bot.start(ctx => ctx.reply(MESSAGES.WELCOME));
   bot.command(COMMANDS.HELP, ctx => ctx.reply(MESSAGES.HELP_MESSAGE));
   bot.command(COMMANDS.START_SESSION, ctx => ctx.scene.enter('start_session'));
   bot.command(COMMANDS.STATUS, statusHandler);
