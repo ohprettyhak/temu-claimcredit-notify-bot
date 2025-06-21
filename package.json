@@ -8,6 +8,13 @@
     "start": "node dist/index.js",
     "dev": "node -r @swc-node/register src/index.ts"
   },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.50.0",
+    "dotenv": "^16.5.0",
+    "luxon": "^3.6.1",
+    "node-cron": "^4.1.0",
+    "telegraf": "^4.16.3"
+  },
   "devDependencies": {
     "@swc-node/register": "^1.10.10",
     "@swc/cli": "^0.7.7",
@@ -17,11 +24,5 @@
     "typescript": "^5.8.3"
   },
   "private": true,
-  "dependencies": {
-    "@supabase/supabase-js": "^2.50.0",
-    "dotenv": "^16.5.0",
-    "luxon": "^3.6.1",
-    "node-cron": "^4.1.0",
-    "telegraf": "^4.16.3"
-  }
+  "packageManager": "pnpm@10.12.1"
 }
