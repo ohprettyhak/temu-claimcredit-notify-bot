@@ -32,6 +32,16 @@ export const DEV_LOGS = {
   WEBHOOK_SERVER_LISTENING: (port: number) => `웹훅 서버가 포트 ${port}에서 실행 중이에요.`,
   WEBHOOK_URL_SET: (url: string) => `웹훅 URL 설정: ${url}`,
   WEBHOOK_REQUEST_RECEIVED: (method: string, path: string) => `웹훅 요청 수신: ${method} ${path}`,
+  
+  WEBHOOK_UPDATE_RECEIVED: (updateType: string, userId: number, chatId: number) => 
+    `[${updateType}] 업데이트 수신 - 사용자: ${userId}, 채팅: ${chatId}`,
+  WEBHOOK_MESSAGE_RECEIVED: (userId: number, username: string, firstName: string, chatId: number, text: string) => 
+    `[메시지] ${firstName}(@${username || 'unknown'}, ID:${userId}, 채팅:${chatId}): ${text}`,
+  WEBHOOK_CALLBACK_RECEIVED: (userId: number, username: string, firstName: string, chatId: number, data: string) => 
+    `[콜백] ${firstName}(@${username || 'unknown'}, ID:${userId}, 채팅:${chatId}): ${data}`,
+  WEBHOOK_COMMAND_RECEIVED: (userId: number, username: string, firstName: string, chatId: number, command: string) => 
+    `[명령어] ${firstName}(@${username || 'unknown'}, ID:${userId}, 채팅:${chatId}): ${command}`,
+  WEBHOOK_UNKNOWN_UPDATE: (updateId: number) => `[알 수 없는 업데이트] Update ID: ${updateId}`,
 } as const;
 
 export const VALIDATION_ERRORS = {
