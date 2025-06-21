@@ -1,67 +1,111 @@
 import cron from 'node-cron';
-import { supabase } from './db';
-import { bot } from './index';
 import { DateTime } from 'luxon';
+import { bot } from './index';
+import { supabase } from './db';
+import { NotificationViewData } from './types';
+import { getSessionUser, updateNotificationSentTime } from './services/database';
 import { claimButtons } from './services/keyboards';
-import { MESSAGES } from './constants';
+import { MESSAGES, APP_CONFIG, ERROR_MESSAGES, DEV_LOGS } from './constants';
 
-export const scheduleJobs = () => {
-  cron.schedule('0 * * * *', async () => {
-    const now = DateTime.utc();
+const getDueNotifications = async (now: DateTime): Promise<NotificationViewData[]> => {
+  const { data: notifications, error } = await supabase
+    .from('notification_by_datetime_view')
+    .select('*')
+    .eq('year', now.year)
+    .eq('month', now.month)
+    .eq('day', now.day)
+    .eq('hour', now.hour);
 
-    const { data: due, error: dueError } = await supabase
-      .from('notification_by_datetime_view')
-      .select('*')
-      .eq('year', now.year)
-      .eq('month', now.month)
-      .eq('day', now.day)
-      .eq('hour', now.hour);
+  if (error) {
+    console.error(ERROR_MESSAGES.ERROR_FETCHING_NOTIFICATIONS, error);
+    throw error;
+  }
 
-    if (dueError) {
-      console.error('Error fetching notifications from view:', dueError);
-      return;
-    }
+  return notifications || [];
+};
 
-    if (!due || due.length === 0) {
-      console.log('No due notifications for this hour.');
-      return;
-    }
+const sendNotificationMessage = async (
+  chatId: number,
+  notificationType:
+    | typeof APP_CONFIG.NOTIFICATION_TYPES.MORNING
+    | typeof APP_CONFIG.NOTIFICATION_TYPES.EVENING,
+  notificationId: string,
+): Promise<void> => {
+  const message =
+    notificationType === APP_CONFIG.NOTIFICATION_TYPES.MORNING
+      ? MESSAGES.MORNING_NOTIFICATION
+      : MESSAGES.EVENING_NOTIFICATION;
 
-    for (const notification of due) {
-      const { data: session, error: sessionError } = await supabase
-        .from('sessions')
-        .select('user_id')
-        .eq('session_id', notification.session_id)
-        .single();
+  const keyboard = claimButtons(notificationId);
 
-      if (sessionError || !session) {
-        console.error(MESSAGES.SESSION_FETCH_ERROR);
-        continue;
-      }
-
-      const chatId = session.user_id;
-
-      try {
-        if (notification.notification_type === 'morning') {
-          await bot.telegram.sendMessage(chatId, MESSAGES.MORNING_NOTIFICATION, {
-            reply_markup: claimButtons(notification.notification_id.toString()).reply_markup,
-          });
-        } else {
-          await bot.telegram.sendMessage(chatId, MESSAGES.EVENING_NOTIFICATION, {
-            reply_markup: claimButtons(notification.notification_id.toString()).reply_markup,
-          });
-        }
-
-        await supabase
-          .from('notifications')
-          .update({ sent_time_utc: now.toISO() })
-          .eq('notification_id', notification.notification_id);
-      } catch (error) {
-        console.error(
-          MESSAGES.NOTIFICATION_SEND_ERROR(chatId.toString(), String(notification.notification_id)),
-          error,
-        );
-      }
-    }
+  await bot.telegram.sendMessage(chatId, message, {
+    reply_markup: keyboard.reply_markup,
   });
+};
+
+const processNotification = async (
+  notification: NotificationViewData,
+  currentTime: DateTime,
+): Promise<void> => {
+  try {
+    const userId = await getSessionUser(notification.session_id);
+
+    await sendNotificationMessage(
+      userId,
+      notification.notification_type as
+        | typeof APP_CONFIG.NOTIFICATION_TYPES.MORNING
+        | typeof APP_CONFIG.NOTIFICATION_TYPES.EVENING,
+      notification.notification_id,
+    );
+
+    const currentTimeISO = currentTime.toISO();
+    if (currentTimeISO) {
+      await updateNotificationSentTime(notification.notification_id, currentTimeISO);
+    }
+
+    console.log(DEV_LOGS.NOTIFICATION_SENT_SUCCESS(String(notification.notification_id)));
+  } catch (error) {
+    console.error(
+      MESSAGES.NOTIFICATION_SEND_ERROR(
+        String(notification.session_id),
+        String(notification.notification_id),
+      ),
+      error,
+    );
+  }
+};
+
+const processNotifications = async (): Promise<void> => {
+  try {
+    const now = DateTime.utc();
+    const dueNotifications = await getDueNotifications(now);
+
+    const nowISO = now.toISO();
+    if (dueNotifications.length === 0) {
+      if (nowISO) {
+        console.log(DEV_LOGS.NO_DUE_NOTIFICATIONS(nowISO));
+      }
+      return;
+    }
+
+    console.log(DEV_LOGS.PROCESSING_NOTIFICATIONS(dueNotifications.length));
+
+    for (const notification of dueNotifications) {
+      await processNotification(notification, now);
+    }
+
+    if (nowISO) {
+      console.log(DEV_LOGS.COMPLETED_PROCESSING(nowISO));
+    }
+  } catch (error) {
+    console.error(ERROR_MESSAGES.ERROR_IN_PROCESSING, error);
+  }
+};
+
+export const scheduleJobs = (): void => {
+  cron.schedule('0 * * * *', processNotifications, {
+    timezone: 'UTC',
+  });
+
+  console.log(DEV_LOGS.SCHEDULER_INITIALIZED);
 };

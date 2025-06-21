@@ -1,58 +1,58 @@
-import { MyContext } from '../types';
-import { supabase } from '../db';
 import { DateTime } from 'luxon';
-import { MESSAGES } from '../constants';
+import { MyContext } from '../types';
+import { getUserSessions, getNotificationStatus } from '../services/database';
+import { formatSessionInfo } from '../utils/formatters';
+import { MESSAGES, APP_CONFIG, ERROR_MESSAGES } from '../constants';
+
+const DEFAULT_TIMEZONE = APP_CONFIG.DEFAULT_TIMEZONE;
 
 const statusHandler = async (ctx: MyContext): Promise<void> => {
   try {
-    const userId = ctx.from!.id;
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('timezone')
-      .eq('user_id', userId)
-      .single();
-
-    if (userError) {
-      await ctx.reply(MESSAGES.USER_INFO_FAILED);
+    if (!ctx.from) {
+      await ctx.reply(MESSAGES.PROCESSING_ERROR);
       return;
     }
 
-    const tz = user?.timezone || 'UTC';
-    const today = DateTime.utc().setZone(tz).toISODate()!;
-    const { data: sessions, error: sessionsError } = await supabase
-      .from('sessions')
-      .select('*')
-      .eq('user_id', userId);
+    const userId = ctx.from.id;
+    const today = DateTime.utc().setZone(DEFAULT_TIMEZONE).toISODate();
 
-    if (sessionsError) {
-      await ctx.reply(MESSAGES.SESSIONS_FETCH_FAILED);
+    if (!today) {
+      await ctx.reply(MESSAGES.PROCESSING_ERROR);
       return;
     }
 
-    if (!sessions || sessions.length === 0) {
+    const sessions = await getUserSessions(userId);
+
+    if (sessions.length === 0) {
       await ctx.reply(MESSAGES.NO_ACTIVE_SESSIONS);
       return;
     }
 
-    let msg = MESSAGES.ACTIVE_SESSIONS + '\n';
+    let message = `${MESSAGES.ACTIVE_SESSIONS}\n`;
+
     for (let i = 0; i < sessions.length; i++) {
       const session = sessions[i];
-      const day =
+      const currentDay =
         DateTime.fromISO(today).diff(DateTime.fromISO(session.start_date), 'days').days + 1;
-      const { data: notif } = await supabase
-        .from('notifications')
-        .select('is_clicked')
-        .eq('session_id', session.session_id)
-        .eq('notification_date', today)
-        .eq('notification_type', 'morning')
-        .single();
 
-      msg += `• #${i + 1} (${session.start_date}~${session.end_date}) — ${Math.floor(day)}일차/7일 — 수령: ${notif?.is_clicked ? '✅' : '❌'}\n`;
+      const isClicked = await getNotificationStatus(
+        session.session_id,
+        today,
+        APP_CONFIG.NOTIFICATION_TYPES.MORNING,
+      );
+
+      message += `${formatSessionInfo(session, i, currentDay, isClicked)}\n`;
     }
 
-    await ctx.reply(msg);
+    await ctx.reply(message);
   } catch (error) {
-    await ctx.reply(MESSAGES.STATUS_ERROR);
+    console.error(ERROR_MESSAGES.STATUS_HANDLER_ERROR, error);
+
+    if (error instanceof Error && error.message === MESSAGES.FAILED_TO_FETCH_SESSIONS) {
+      await ctx.reply(MESSAGES.SESSIONS_FETCH_FAILED);
+    } else {
+      await ctx.reply(MESSAGES.STATUS_ERROR);
+    }
   }
 };
 

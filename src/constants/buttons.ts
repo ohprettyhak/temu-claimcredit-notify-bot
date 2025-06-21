@@ -1,6 +1,4 @@
 export const BUTTON_TEXT = {
-  OTHER_TIMEZONE: '기타',
-
   CONFIRM: '확인 ✅',
   CANCEL: '취소 ❌',
 

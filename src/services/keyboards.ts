@@ -1,67 +1,75 @@
 import { Markup } from 'telegraf';
-import { BUTTON_TEXT, CALLBACK_ACTIONS, CALLBACK_PREFIXES } from '../constants';
+import { BUTTON_TEXT, CALLBACK_ACTIONS } from '../constants';
 
-export const timezoneKeyboard = Markup.inlineKeyboard([
-  ['Asia/Seoul', 'America/New_York', 'Europe/London'].map(tz =>
-    Markup.button.callback(tz, `${CALLBACK_PREFIXES.TIMEZONE}${tz}`),
-  ),
-  [Markup.button.callback(BUTTON_TEXT.OTHER_TIMEZONE, CALLBACK_ACTIONS.TZ_OTHER)],
-]);
+type TimeType = 'MORN' | 'EVE';
+type TimeButtonRow = ReturnType<typeof Markup.button.callback>[];
 
-export function timeKeyboard(prefix: 'MORN' | 'EVE') {
-  let options: string[];
+const BUTTONS_PER_ROW = 4;
+const TEMU_URL = 'https://www.temu.com/s/';
 
-  if (prefix === 'MORN') {
-    options = [
-      '00:00',
-      '01:00',
-      '02:00',
-      '03:00',
-      '04:00',
-      '05:00',
-      '06:00',
-      '07:00',
-      '08:00',
-      '09:00',
-      '10:00',
-      '11:00',
-    ];
-  } else {
-    options = [
-      '12:00',
-      '13:00',
-      '14:00',
-      '15:00',
-      '16:00',
-      '17:00',
-      '18:00',
-      '19:00',
-      '20:00',
-      '21:00',
-      '22:00',
-      '23:00',
-    ];
-  }
+const MORNING_TIMES = [
+  '00:00',
+  '01:00',
+  '02:00',
+  '03:00',
+  '04:00',
+  '05:00',
+  '06:00',
+  '07:00',
+  '08:00',
+  '09:00',
+  '10:00',
+  '11:00',
+] as const;
 
-  const rows = [];
-  for (let i = 0; i < options.length; i += 4) {
-    const row = options.slice(i, i + 4).map(t => Markup.button.callback(t, `${prefix}_${t}`));
+const EVENING_TIMES = [
+  '12:00',
+  '13:00',
+  '14:00',
+  '15:00',
+  '16:00',
+  '17:00',
+  '18:00',
+  '19:00',
+  '20:00',
+  '21:00',
+  '22:00',
+  '23:00',
+] as const;
+
+const getTimeOptions = (type: TimeType): readonly string[] => {
+  return type === 'MORN' ? MORNING_TIMES : EVENING_TIMES;
+};
+
+const createTimeButtonRows = (timeOptions: readonly string[], type: TimeType): TimeButtonRow[] => {
+  const rows: TimeButtonRow[] = [];
+
+  for (let i = 0; i < timeOptions.length; i += BUTTONS_PER_ROW) {
+    const rowTimes = timeOptions.slice(i, i + BUTTONS_PER_ROW);
+    const row = rowTimes.map(time => Markup.button.callback(time, `${type}_${time}`));
     rows.push(row);
   }
 
+  return rows;
+};
+
+export const timeKeyboard = (type: TimeType): ReturnType<typeof Markup.inlineKeyboard> => {
+  const timeOptions = getTimeOptions(type);
+  const rows = createTimeButtonRows(timeOptions, type);
+
   return Markup.inlineKeyboard(rows);
-}
+};
 
 export const confirmKeyboard = Markup.inlineKeyboard([
   Markup.button.callback(BUTTON_TEXT.CONFIRM, CALLBACK_ACTIONS.CONFIRM),
   Markup.button.callback(BUTTON_TEXT.CANCEL, CALLBACK_ACTIONS.CANCEL),
 ]);
 
-export function claimButtons(notificationId: string) {
+export const claimButtons = (notificationId: string): ReturnType<typeof Markup.inlineKeyboard> => {
   return Markup.inlineKeyboard([
     [
       Markup.button.callback(BUTTON_TEXT.CLAIMED, `${CALLBACK_ACTIONS.CLAIM}_${notificationId}`),
-      Markup.button.url(BUTTON_TEXT.GO_TO_TEMU, 'https://www.temu.com/s/'),
+      Markup.button.url(BUTTON_TEXT.GO_TO_TEMU, TEMU_URL),
     ],
   ]);
-}
+};
