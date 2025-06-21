@@ -1,61 +1,70 @@
 import { DateTime } from 'luxon';
 import { MyContext } from '../types';
 import { getUserSessions, getNotificationStatus } from '../services';
-import { formatSessionInfo } from '../utils';
-import { MESSAGES, APP_CONFIG, ERROR_MESSAGES } from '../constants';
+import { UI_MESSAGES, APP_CONFIG, SYSTEM_ERROR_MESSAGES } from '../constants';
+import { withErrorHandling, withUserValidation } from '../utils';
 
-const DEFAULT_TIMEZONE = APP_CONFIG.DEFAULT_TIMEZONE;
+const generateStatusMessage = async (userId: number): Promise<string> => {
+  const sessions = await getUserSessions(userId);
 
-const statusHandler = async (ctx: MyContext): Promise<void> => {
-  try {
-    if (!ctx.from) {
-      await ctx.reply(MESSAGES.PROCESSING_ERROR);
-      return;
-    }
+  if (sessions.length === 0) {
+    return UI_MESSAGES.NO_ACTIVE_SESSIONS;
+  }
 
-    const userId = ctx.from.id;
-    const today = DateTime.utc().setZone(DEFAULT_TIMEZONE).toISODate();
+  let statusMessage = UI_MESSAGES.ACTIVE_SESSIONS;
 
-    if (!today) {
-      await ctx.reply(MESSAGES.PROCESSING_ERROR);
-      return;
-    }
+  for (const session of sessions) {
+    const startDate = DateTime.fromISO(session.start_date);
+    const endDate = DateTime.fromISO(session.end_date);
+    const now = DateTime.now();
 
-    const sessions = await getUserSessions(userId);
+    statusMessage += `\n\n📅 ${session.session_id}`;
+    statusMessage += `\n🕐 ${session.morning_notification_time} / ${session.evening_notification_time}`;
+    statusMessage += `\n📆 ${startDate.toFormat('yyyy-MM-dd')} ~ ${endDate.toFormat('yyyy-MM-dd')}`;
 
-    if (sessions.length === 0) {
-      await ctx.reply(MESSAGES.NO_ACTIVE_SESSIONS);
-      return;
-    }
+    let checkedDays = 0;
+    let totalDays = 0;
 
-    let message = `${MESSAGES.ACTIVE_SESSIONS}\n`;
+    for (let date = startDate; date <= endDate; date = date.plus({ days: 1 })) {
+      if (date > now) break;
 
-    for (let i = 0; i < sessions.length; i++) {
-      const session = sessions[i];
-      const currentDay =
-        DateTime.fromISO(today).diff(DateTime.fromISO(session.start_date), 'days').days + 1;
+      totalDays++;
+      const dateStr = date.toISODate()!;
 
-      const isClicked = await getNotificationStatus(
+      const morningClaimed = await getNotificationStatus(
         session.session_id,
-        today,
+        dateStr,
         APP_CONFIG.NOTIFICATION_TYPES.MORNING,
       );
+      const eveningClaimed = await getNotificationStatus(
+        session.session_id,
+        dateStr,
+        APP_CONFIG.NOTIFICATION_TYPES.EVENING,
+      );
 
-      const sessionNumber = i + 1;
-      const dayNumber = Math.floor(currentDay);
-      message += `${formatSessionInfo(session, sessionNumber, dayNumber, isClicked)}\n`;
+      if (morningClaimed && eveningClaimed) {
+        checkedDays++;
+      }
     }
 
-    await ctx.reply(message);
+    statusMessage += `\n✅ 완료: ${checkedDays}/${totalDays}일`;
+  }
+
+  return statusMessage;
+};
+
+const _statusHandler = async (ctx: MyContext): Promise<void> => {
+  try {
+    const userId = ctx.from!.id;
+    const statusMessage = await generateStatusMessage(userId);
+    await ctx.reply(statusMessage);
   } catch (error) {
-    console.error(ERROR_MESSAGES.STATUS_HANDLER_ERROR, error);
-
-    if (error instanceof Error && error.message === MESSAGES.FAILED_TO_FETCH_SESSIONS) {
-      await ctx.reply(MESSAGES.SESSIONS_FETCH_FAILED);
-    } else {
-      await ctx.reply(MESSAGES.STATUS_ERROR);
-    }
+    console.error(SYSTEM_ERROR_MESSAGES.STATUS_HANDLER_ERROR, error);
+    await ctx.reply(UI_MESSAGES.STATUS_ERROR);
   }
 };
 
-export default statusHandler;
+export const statusHandler = withErrorHandling(
+  withUserValidation(_statusHandler),
+  SYSTEM_ERROR_MESSAGES.STATUS_HANDLER_ERROR,
+);

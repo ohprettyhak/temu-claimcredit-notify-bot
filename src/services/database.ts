@@ -1,6 +1,6 @@
 import { supabase } from '../db';
 import { DatabaseSession } from '../types';
-import { MESSAGES } from '../constants';
+import { UI_MESSAGES } from '../constants';
 
 export const getUserSessions = async (userId: number): Promise<DatabaseSession[]> => {
   const { data: sessions, error } = await supabase
@@ -9,7 +9,7 @@ export const getUserSessions = async (userId: number): Promise<DatabaseSession[]
     .eq('user_id', userId);
 
   if (error) {
-    throw new Error(MESSAGES.FAILED_TO_FETCH_SESSIONS);
+    throw new Error(UI_MESSAGES.FAILED_TO_FETCH_SESSIONS);
   }
 
   return sessions || [];
@@ -39,7 +39,7 @@ export const getSessionUser = async (sessionId: string): Promise<number> => {
     .single();
 
   if (error || !session) {
-    throw new Error(MESSAGES.SESSION_NOT_FOUND);
+    throw new Error(UI_MESSAGES.SESSION_NOT_FOUND);
   }
 
   return session.user_id;
@@ -73,7 +73,7 @@ export const createSession = async (sessionData: {
     .single();
 
   if (error || !session) {
-    throw new Error(MESSAGES.SESSION_CREATION_FAILED);
+    throw new Error(UI_MESSAGES.SESSION_CREATION_FAILED);
   }
 
   return session;

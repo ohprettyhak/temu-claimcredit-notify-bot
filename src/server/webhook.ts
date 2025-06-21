@@ -1,9 +1,9 @@
 import express from 'express';
 import { WEBHOOK_URL, WEBHOOK_PORT, WEBHOOK_PATH } from '../config';
 import { bot } from '../bot';
-import { MESSAGES, ERROR_MESSAGES, DEV_LOGS } from '../constants';
+import { WEBHOOK_MESSAGES, DEV_LOGS, SYSTEM_ERROR_MESSAGES } from '../constants';
 
-export const app = express();
+const app = express();
 
 app.use(express.json());
 
@@ -15,7 +15,7 @@ const logTelegramUpdate = (update: any): void => {
       const message = update.message;
       const user = message.from;
       const chat = message.chat;
-      const text = message.text || '[비텍스트 메시지]';
+      const text = message.text || WEBHOOK_MESSAGES.NON_TEXT_MESSAGE;
 
       if (user && chat) {
         const userId = user.id;
@@ -33,7 +33,7 @@ const logTelegramUpdate = (update: any): void => {
       const callbackQuery = update.callback_query;
       const user = callbackQuery.from;
       const message = callbackQuery.message;
-      const data = callbackQuery.data || '[데이터 없음]';
+      const data = callbackQuery.data || WEBHOOK_MESSAGES.NO_DATA;
 
       if (user && message) {
         const userId = user.id;
@@ -51,27 +51,31 @@ const logTelegramUpdate = (update: any): void => {
       if (user && chat) {
         const userId = user.id;
         const chatId = chat.id;
-        console.log(DEV_LOGS.WEBHOOK_UPDATE_RECEIVED('편집된 메시지', userId, chatId));
+        console.log(
+          DEV_LOGS.WEBHOOK_UPDATE_RECEIVED(WEBHOOK_MESSAGES.EDITED_MESSAGE, userId, chatId),
+        );
       }
     } else if (update.channel_post) {
       const channelPost = update.channel_post;
       const chat = channelPost.chat;
 
       if (chat) {
-        console.log(DEV_LOGS.WEBHOOK_UPDATE_RECEIVED('채널 포스트', 0, chat.id));
+        console.log(DEV_LOGS.WEBHOOK_UPDATE_RECEIVED(WEBHOOK_MESSAGES.CHANNEL_POST, 0, chat.id));
       }
     } else if (update.edited_channel_post) {
       const editedChannelPost = update.edited_channel_post;
       const chat = editedChannelPost.chat;
 
       if (chat) {
-        console.log(DEV_LOGS.WEBHOOK_UPDATE_RECEIVED('편집된 채널 포스트', 0, chat.id));
+        console.log(
+          DEV_LOGS.WEBHOOK_UPDATE_RECEIVED(WEBHOOK_MESSAGES.EDITED_CHANNEL_POST, 0, chat.id),
+        );
       }
     } else {
       console.log(DEV_LOGS.WEBHOOK_UNKNOWN_UPDATE(updateId));
     }
   } catch (error) {
-    console.error('웹훅 업데이트 로깅 중 오류:', error);
+    console.error(WEBHOOK_MESSAGES.LOGGING_ERROR, error);
   }
 };
 
@@ -81,14 +85,14 @@ export const setupWebhook = async (): Promise<void> => {
     await bot.telegram.setWebhook(webhookUrl);
     console.log(DEV_LOGS.WEBHOOK_URL_SET(webhookUrl));
   } catch (error) {
-    console.error(ERROR_MESSAGES.WEBHOOK_SETUP_ERROR, error);
+    console.error(SYSTEM_ERROR_MESSAGES.WEBHOOK_SETUP_ERROR, error);
     throw error;
   }
 };
 
 export const setupRoutes = (): void => {
   app.get('/health', (_, res) => {
-    res.json({ status: 'ok', message: MESSAGES.WEBHOOK_HEALTH_CHECK });
+    res.json({ status: 'ok', message: WEBHOOK_MESSAGES.HEALTH_CHECK });
   });
 
   app.post(WEBHOOK_PATH, (req, res) => {
@@ -98,7 +102,7 @@ export const setupRoutes = (): void => {
       bot.handleUpdate(req.body);
       res.status(200).send('OK');
     } catch (error) {
-      console.error(ERROR_MESSAGES.WEBHOOK_REQUEST_ERROR, error);
+      console.error(SYSTEM_ERROR_MESSAGES.WEBHOOK_REQUEST_ERROR, error);
       res.status(500).send('Internal Server Error');
     }
   });

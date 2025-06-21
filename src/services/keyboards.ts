@@ -1,11 +1,10 @@
 import { Markup } from 'telegraf';
-import { BUTTON_TEXT, CALLBACK_ACTIONS } from '../constants';
+import { BUTTON_TEXTS, CALLBACK_ACTIONS, APP_CONFIG } from '../constants';
 
 type TimeType = 'MORN' | 'EVE';
 type TimeButtonRow = ReturnType<typeof Markup.button.callback>[];
 
 const BUTTONS_PER_ROW = 4;
-const TEMU_URL = 'https://www.temu.com/s/';
 
 const MORNING_TIMES = [
   '00:00',
@@ -61,15 +60,15 @@ export const timeKeyboard = (type: TimeType): ReturnType<typeof Markup.inlineKey
 };
 
 export const confirmKeyboard = Markup.inlineKeyboard([
-  Markup.button.callback(BUTTON_TEXT.CONFIRM, CALLBACK_ACTIONS.CONFIRM),
-  Markup.button.callback(BUTTON_TEXT.CANCEL, CALLBACK_ACTIONS.CANCEL),
+  Markup.button.callback(BUTTON_TEXTS.CONFIRM, CALLBACK_ACTIONS.CONFIRM),
+  Markup.button.callback(BUTTON_TEXTS.CANCEL, CALLBACK_ACTIONS.CANCEL),
 ]);
 
 export const claimButtons = (notificationId: string): ReturnType<typeof Markup.inlineKeyboard> => {
   return Markup.inlineKeyboard([
     [
-      Markup.button.callback(BUTTON_TEXT.CLAIMED, `claim_${notificationId}`),
-      Markup.button.url(BUTTON_TEXT.GO_TO_TEMU, TEMU_URL),
+      Markup.button.callback(BUTTON_TEXTS.CLAIMED, `claim_${notificationId}`),
+      Markup.button.url(BUTTON_TEXTS.GO_TO_TEMU, APP_CONFIG.URLS.TEMU),
     ],
   ]);
 };
@@ -77,7 +76,7 @@ export const claimButtons = (notificationId: string): ReturnType<typeof Markup.i
 export const createSessionButtons = (sessions: { session_id: string }[]) => {
   return sessions.map((session, index) =>
     Markup.button.callback(
-      `${BUTTON_TEXT.SESSION_PREFIX}${index + 1}`,
+      `${BUTTON_TEXTS.SESSION_PREFIX}${index + 1}`,
       `delete_session_${session.session_id}`,
     ),
   );

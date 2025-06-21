@@ -1,11 +1,11 @@
 import { supabase } from '../db';
 import { bot } from '../bot';
 import { NODE_ENV } from '../config';
-import { ERROR_MESSAGES } from '../constants';
+import { SYSTEM_ERROR_MESSAGES } from '../constants';
 
 export const gracefulShutdown = (): void => {
   const shutdown = async (signal: string): Promise<void> => {
-    console.log(ERROR_MESSAGES.SHUTDOWN_SIGNAL_RECEIVED(signal));
+    console.log(SYSTEM_ERROR_MESSAGES.SHUTDOWN_SIGNAL_RECEIVED(signal));
 
     try {
       if (NODE_ENV === 'production') {
@@ -15,7 +15,7 @@ export const gracefulShutdown = (): void => {
       }
       process.exit(0);
     } catch (error) {
-      console.error(ERROR_MESSAGES.SHUTDOWN_ERROR, error);
+      console.error(SYSTEM_ERROR_MESSAGES.SHUTDOWN_ERROR, error);
       process.exit(1);
     }
   };

@@ -9,4 +9,7 @@ export const APP_CONFIG = {
     CLAIMED: '✅',
     NOT_CLAIMED: '❌',
   },
+  URLS: {
+    TEMU: 'https://www.temu.com/s/',
+  },
 } as const;

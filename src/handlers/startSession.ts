@@ -12,9 +12,9 @@ import { hasCallbackData, hasMessageText, MyContext } from '../types';
 import {
   CALLBACK_ACTIONS,
   CALLBACK_PREFIXES,
-  MESSAGES,
+  UI_MESSAGES,
   APP_CONFIG,
-  ERROR_MESSAGES,
+  SYSTEM_ERROR_MESSAGES,
 } from '../constants';
 
 const DEFAULT_TIMEZONE = APP_CONFIG.DEFAULT_TIMEZONE;
@@ -49,11 +49,11 @@ const buildFormMessage = (
   let message = '';
 
   if (morningTime) {
-    message += `${MESSAGES.MORNING_TIME_SELECTED(morningTime)}`;
+    message += `${UI_MESSAGES.MORNING_TIME_SELECTED(morningTime)}`;
   }
 
   if (eveningTime) {
-    message += `\n${MESSAGES.EVENING_TIME_SELECTED(eveningTime)}`;
+    message += `\n${UI_MESSAGES.EVENING_TIME_SELECTED(eveningTime)}`;
   }
 
   if (currentStepMessage) {
@@ -94,10 +94,10 @@ const handleSessionCancellation = async (ctx: MyContext): Promise<void> => {
   const { morningTime, eveningTime } = ctx.scene.state;
 
   if (morningTime && eveningTime) {
-    await updateFormStatus(ctx, MESSAGES.SESSION_CANCELLED_STATUS);
-    await ctx.reply(MESSAGES.SESSION_CANCELLED_WITH_INFO(morningTime, eveningTime));
+    await updateFormStatus(ctx, UI_MESSAGES.SESSION_CANCELLED_STATUS);
+    await ctx.reply(UI_MESSAGES.SESSION_CANCELLED_WITH_INFO(morningTime, eveningTime));
   } else {
-    await ctx.reply(MESSAGES.SESSION_CANCELLED);
+    await ctx.reply(UI_MESSAGES.SESSION_CANCELLED);
   }
 };
 
@@ -145,25 +145,25 @@ const validateSessionData = (ctx: MyContext): boolean => {
 const processSessionCreation = async (ctx: MyContext): Promise<void> => {
   try {
     if (!ctx.from) {
-      await ctx.reply(MESSAGES.PROCESSING_ERROR);
+      await ctx.reply(UI_MESSAGES.PROCESSING_ERROR);
       return;
     }
 
     if (!validateSessionData(ctx)) {
-      await ctx.reply(MESSAGES.MISSING_SESSION_DATA);
+      await ctx.reply(UI_MESSAGES.MISSING_SESSION_DATA);
       return;
     }
 
     const { morningTime, eveningTime, startDate } = ctx.scene.state;
 
-    await updateFormStatus(ctx, MESSAGES.SESSION_PROCESSING);
+    await updateFormStatus(ctx, UI_MESSAGES.SESSION_PROCESSING);
 
     const endDate = DateTime.fromISO(startDate!)
       .plus({ days: APP_CONFIG.SESSION_DURATION_DAYS - 1 })
       .toISODate();
 
     if (!endDate) {
-      await ctx.reply(MESSAGES.SESSION_CREATION_FAILED);
+      await ctx.reply(UI_MESSAGES.SESSION_CREATION_FAILED);
       return;
     }
 
@@ -188,11 +188,11 @@ const processSessionCreation = async (ctx: MyContext): Promise<void> => {
     const notifications = createNotificationData(sessionData);
     await createNotifications(notifications);
 
-    await updateFormStatus(ctx, MESSAGES.SESSION_SUCCESS);
+    await updateFormStatus(ctx, UI_MESSAGES.SESSION_SUCCESS);
   } catch (error) {
-    console.error(ERROR_MESSAGES.SESSION_CREATION_ERROR, error);
-    await updateFormStatus(ctx, MESSAGES.SESSION_CREATION_ERROR);
-    await ctx.reply(MESSAGES.SESSION_CREATION_FAILED);
+    console.error(SYSTEM_ERROR_MESSAGES.SESSION_CREATION_ERROR, error);
+    await updateFormStatus(ctx, UI_MESSAGES.SESSION_CREATION_ERROR);
+    await ctx.reply(UI_MESSAGES.SESSION_CREATION_FAILED);
   }
 };
 
@@ -201,7 +201,7 @@ const handleConfirmationStep = async (ctx: MyContext): Promise<void> => {
     if (hasMessageText(ctx) && checkForCancellation(ctx.message.text)) {
       return;
     }
-    await ctx.reply(MESSAGES.USE_CONFIRMATION_BUTTONS);
+    await ctx.reply(UI_MESSAGES.USE_CONFIRMATION_BUTTONS);
     return;
   }
 
@@ -229,7 +229,7 @@ export const startSession = new Scenes.WizardScene<MyContext>(
       formMessageId: undefined,
     };
 
-    const message = await ctx.reply(MESSAGES.SELECT_MORNING_TIME, timeKeyboard('MORN'));
+    const message = await ctx.reply(UI_MESSAGES.SELECT_MORNING_TIME, timeKeyboard('MORN'));
     ctx.scene.state.formMessageId = message.message_id;
     return ctx.wizard.next();
   },
@@ -239,13 +239,13 @@ export const startSession = new Scenes.WizardScene<MyContext>(
       if (hasMessageText(ctx) && checkForCancellation(ctx.message.text)) {
         return handleCancellation(ctx);
       }
-      return ctx.reply(MESSAGES.USE_BUTTONS_FOR_MORNING);
+      return ctx.reply(UI_MESSAGES.USE_BUTTONS_FOR_MORNING);
     }
 
     const data = ctx.callbackQuery.data;
 
     if (!data.startsWith(CALLBACK_PREFIXES.MORNING_TIME)) {
-      return ctx.reply(MESSAGES.USE_BUTTONS_FOR_MORNING);
+      return ctx.reply(UI_MESSAGES.USE_BUTTONS_FOR_MORNING);
     }
 
     ctx.scene.state.morningTime = data.split('_')[1];
@@ -253,7 +253,7 @@ export const startSession = new Scenes.WizardScene<MyContext>(
     const formMessage = buildFormMessage(
       ctx.scene.state.morningTime,
       undefined,
-      MESSAGES.SELECT_EVENING_TIME,
+      UI_MESSAGES.SELECT_EVENING_TIME,
     );
 
     await updateFormMessage(ctx, formMessage, timeKeyboard('EVE'));
@@ -265,13 +265,13 @@ export const startSession = new Scenes.WizardScene<MyContext>(
       if (hasMessageText(ctx) && checkForCancellation(ctx.message.text)) {
         return handleCancellation(ctx);
       }
-      return ctx.reply(MESSAGES.USE_BUTTONS_FOR_EVENING);
+      return ctx.reply(UI_MESSAGES.USE_BUTTONS_FOR_EVENING);
     }
 
     const data = ctx.callbackQuery.data;
 
     if (!data.startsWith(CALLBACK_PREFIXES.EVENING_TIME)) {
-      return ctx.reply(MESSAGES.USE_BUTTONS_FOR_EVENING);
+      return ctx.reply(UI_MESSAGES.USE_BUTTONS_FOR_EVENING);
     }
 
     ctx.scene.state.eveningTime = data.split('_')[1];
@@ -279,18 +279,18 @@ export const startSession = new Scenes.WizardScene<MyContext>(
     const { timezone, morningTime, eveningTime } = ctx.scene.state;
 
     if (!timezone || !morningTime || !eveningTime) {
-      return ctx.reply(MESSAGES.MISSING_INFO);
+      return ctx.reply(UI_MESSAGES.MISSING_INFO);
     }
 
     const startDate = DateTime.now().setZone(timezone).toISODate();
 
     if (!startDate) {
-      return ctx.reply(MESSAGES.PROCESSING_ERROR);
+      return ctx.reply(UI_MESSAGES.PROCESSING_ERROR);
     }
 
     ctx.scene.state.startDate = startDate;
 
-    const formMessage = buildFormMessage(morningTime, eveningTime, MESSAGES.FORM_CONFIRMATION);
+    const formMessage = buildFormMessage(morningTime, eveningTime, UI_MESSAGES.FORM_CONFIRMATION);
 
     await updateFormMessage(ctx, formMessage, confirmKeyboard);
     return ctx.wizard.next();

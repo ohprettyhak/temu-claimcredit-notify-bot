@@ -1,7 +1,7 @@
 import { MyContext } from '../types';
-import { MESSAGES, ERROR_MESSAGES } from '../constants';
+import { UI_MESSAGES, SYSTEM_ERROR_MESSAGES } from '../constants';
 
-export type AsyncHandler<T = void> = (ctx: MyContext) => Promise<T>;
+type AsyncHandler<T = void> = (ctx: MyContext) => Promise<T>;
 
 export const withErrorHandling = <T = void>(
   handler: AsyncHandler<T>,
@@ -11,12 +11,12 @@ export const withErrorHandling = <T = void>(
     try {
       return await handler(ctx);
     } catch (error) {
-      console.error(customErrorMessage || ERROR_MESSAGES.GLOBAL_BOT_ERROR, error);
+      console.error(customErrorMessage || SYSTEM_ERROR_MESSAGES.GLOBAL_BOT_ERROR, error);
 
       if (ctx.callbackQuery) {
-        await ctx.answerCbQuery(MESSAGES.PROCESSING_ERROR);
+        await ctx.answerCbQuery(UI_MESSAGES.PROCESSING_ERROR);
       } else {
-        await ctx.reply(MESSAGES.PROCESSING_ERROR);
+        await ctx.reply(UI_MESSAGES.PROCESSING_ERROR);
       }
 
       throw error;
@@ -27,7 +27,7 @@ export const withErrorHandling = <T = void>(
 export const withCallbackValidation = (handler: AsyncHandler): AsyncHandler => {
   return async (ctx: MyContext): Promise<void> => {
     if (!ctx.callbackQuery || !('data' in ctx.callbackQuery)) {
-      await ctx.answerCbQuery(MESSAGES.PROCESSING_ERROR);
+      await ctx.answerCbQuery(UI_MESSAGES.PROCESSING_ERROR);
       return;
     }
 
@@ -38,7 +38,7 @@ export const withCallbackValidation = (handler: AsyncHandler): AsyncHandler => {
 export const withUserValidation = (handler: AsyncHandler): AsyncHandler => {
   return async (ctx: MyContext): Promise<void> => {
     if (!ctx.from) {
-      await ctx.reply(MESSAGES.PROCESSING_ERROR);
+      await ctx.reply(UI_MESSAGES.PROCESSING_ERROR);
       return;
     }
 

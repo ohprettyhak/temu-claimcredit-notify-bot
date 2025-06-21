@@ -1,34 +1,38 @@
 import { NODE_ENV } from './config';
 import { initializeBot, bot } from './bot';
-import { setupRoutes, setupWebhook, startServer } from './server';
-import { gracefulShutdown } from './utils';
+import { setupWebhook, setupRoutes, startServer } from './server';
 import { scheduleJobs } from './scheduler';
-import { DEV_LOGS, ERROR_MESSAGES } from './constants';
+import { DEV_LOGS, SYSTEM_ERROR_MESSAGES } from './constants';
+import { gracefulShutdown } from './utils';
 
-const startPolling = async (): Promise<void> => {
-  await bot.launch();
-  console.log(DEV_LOGS.BOT_RUNNING);
-};
-
-const main = async (): Promise<void> => {
+const startApp = async (): Promise<void> => {
   try {
+    console.log(DEV_LOGS.BOT_RUNNING);
+
     initializeBot();
-    scheduleJobs();
-    gracefulShutdown();
 
     if (NODE_ENV === 'production') {
-      setupRoutes();
       await setupWebhook();
+      setupRoutes();
       startServer();
     } else {
-      await startPolling();
+      bot.launch();
     }
 
-    console.log(DEV_LOGS.BOT_RUNNING);
+    scheduleJobs();
+    gracefulShutdown();
   } catch (error) {
-    console.error(ERROR_MESSAGES.BOT_INIT_FAILED, error);
+    console.error(SYSTEM_ERROR_MESSAGES.BOT_INIT_FAILED, error);
     process.exit(1);
   }
 };
 
-main();
+if (NODE_ENV === 'production') {
+  startApp();
+} else {
+  console.log(DEV_LOGS.BOT_RUNNING);
+  initializeBot();
+  bot.launch();
+  scheduleJobs();
+  gracefulShutdown();
+}

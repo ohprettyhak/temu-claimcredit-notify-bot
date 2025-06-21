@@ -4,7 +4,7 @@ import { bot } from './bot';
 import { supabase } from './db';
 import { NotificationViewData } from './types';
 import { getSessionUser, updateNotificationSentTime, claimButtons } from './services';
-import { MESSAGES, APP_CONFIG, ERROR_MESSAGES, DEV_LOGS } from './constants';
+import { UI_MESSAGES, APP_CONFIG, SYSTEM_ERROR_MESSAGES, DEV_LOGS } from './constants';
 
 const getDueNotifications = async (now: DateTime): Promise<NotificationViewData[]> => {
   const { data: notifications, error } = await supabase
@@ -16,7 +16,7 @@ const getDueNotifications = async (now: DateTime): Promise<NotificationViewData[
     .eq('hour', now.hour);
 
   if (error) {
-    console.error(ERROR_MESSAGES.ERROR_FETCHING_NOTIFICATIONS, error);
+    console.error(SYSTEM_ERROR_MESSAGES.ERROR_FETCHING_NOTIFICATIONS, error);
     throw error;
   }
 
@@ -32,8 +32,8 @@ const sendNotificationMessage = async (
 ): Promise<void> => {
   const message =
     notificationType === APP_CONFIG.NOTIFICATION_TYPES.MORNING
-      ? MESSAGES.MORNING_NOTIFICATION
-      : MESSAGES.EVENING_NOTIFICATION;
+      ? UI_MESSAGES.MORNING_NOTIFICATION
+      : UI_MESSAGES.EVENING_NOTIFICATION;
 
   const keyboard = claimButtons(notificationId);
 
@@ -65,7 +65,7 @@ const processNotification = async (
     console.log(DEV_LOGS.NOTIFICATION_SENT_SUCCESS(String(notification.notification_id)));
   } catch (error) {
     console.error(
-      MESSAGES.NOTIFICATION_SEND_ERROR(
+      UI_MESSAGES.NOTIFICATION_SEND_ERROR(
         String(notification.session_id),
         String(notification.notification_id),
       ),
@@ -97,7 +97,7 @@ const processNotifications = async (): Promise<void> => {
       console.log(DEV_LOGS.COMPLETED_PROCESSING(nowISO));
     }
   } catch (error) {
-    console.error(ERROR_MESSAGES.ERROR_IN_PROCESSING, error);
+    console.error(SYSTEM_ERROR_MESSAGES.ERROR_IN_PROCESSING, error);
   }
 };
 
