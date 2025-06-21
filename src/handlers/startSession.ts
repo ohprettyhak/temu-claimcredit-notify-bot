@@ -9,13 +9,7 @@ import {
   createNotifications,
   toUTC,
 } from '../services';
-import {
-  hasCallbackData,
-  hasMessageText,
-  MyContext,
-  SessionCreationData,
-  NotificationRecord,
-} from '../types';
+import { hasCallbackData, hasMessageText, MyContext, SessionCreationData } from '../types';
 import {
   CALLBACK_ACTIONS,
   CALLBACK_PREFIXES,
@@ -102,8 +96,8 @@ const handleCancellation = async (ctx: MyContext): Promise<void> => {
   await ctx.scene.leave();
 };
 
-const createNotificationData = (data: SessionCreationData): NotificationRecord[] => {
-  const notifications: NotificationRecord[] = [];
+const createNotificationData = (data: SessionCreationData) => {
+  const notifications = [];
 
   for (let i = 0; i < APP_CONFIG.SESSION_DURATION_DAYS; i++) {
     const date = DateTime.fromISO(data.startDate).plus({ days: i }).toISODate();
@@ -117,7 +111,6 @@ const createNotificationData = (data: SessionCreationData): NotificationRecord[]
 
     notifications.push(
       {
-        notification_id: '',
         session_id: data.sessionId,
         notification_date: date,
         notification_type: APP_CONFIG.NOTIFICATION_TYPES.MORNING,
@@ -125,7 +118,6 @@ const createNotificationData = (data: SessionCreationData): NotificationRecord[]
         is_clicked: isTodayMorningClaimed,
       },
       {
-        notification_id: '',
         session_id: data.sessionId,
         notification_date: date,
         notification_type: APP_CONFIG.NOTIFICATION_TYPES.EVENING,
