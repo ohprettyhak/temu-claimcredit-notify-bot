@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "",
   "main": "dist/src/index.js",
-  "type": "module",
   "scripts": {
     "build": "swc src -d dist --config-file .swcrc",
     "start": "node dist/src/index.js",
