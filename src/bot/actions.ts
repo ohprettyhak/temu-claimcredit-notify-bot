@@ -1,12 +1,5 @@
 import { Markup } from 'telegraf';
-import { MyContext, hasCallbackData } from '../types';
-import {
-  markNotificationClaimed,
-  deleteSession,
-  getUserSessions,
-  createSessionButtons,
-} from '../services';
-import { withErrorHandling, withCallbackValidation, withUserValidation } from '../utils';
+
 import {
   UI_MESSAGES,
   SYSTEM_ERROR_MESSAGES,
@@ -14,6 +7,14 @@ import {
   CALLBACK_PREFIXES,
   DEV_LOGS,
 } from '../constants';
+import {
+  markNotificationClaimed,
+  deleteSession,
+  getUserSessions,
+  createSessionButtons,
+} from '../services';
+import { MyContext, hasCallbackData } from '../types';
+import { withErrorHandling, withCallbackValidation, withUserValidation } from '../utils';
 
 const _handleClaimAction = async (ctx: MyContext): Promise<void> => {
   if (!hasCallbackData(ctx)) {
@@ -27,6 +28,7 @@ const _handleClaimAction = async (ctx: MyContext): Promise<void> => {
   try {
     await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
   } catch (editError) {
+    console.error(editError);
     console.log(DEV_LOGS.KEYBOARD_REMOVAL_FAILED);
   }
 
@@ -54,6 +56,7 @@ const _handleDeleteSessionAction = async (ctx: MyContext): Promise<void> => {
     try {
       await ctx.editMessageText(UI_MESSAGES.NO_SESSIONS_TO_CANCEL);
     } catch (editError) {
+      console.error(editError);
       await ctx.reply(UI_MESSAGES.NO_SESSIONS_TO_CANCEL);
     }
   } else {
@@ -63,6 +66,7 @@ const _handleDeleteSessionAction = async (ctx: MyContext): Promise<void> => {
     try {
       await ctx.editMessageText(UI_MESSAGES.SELECT_SESSION_TO_CANCEL, keyboard);
     } catch (editError) {
+      console.error(editError);
       await ctx.reply(UI_MESSAGES.SELECT_SESSION_TO_CANCEL, keyboard);
     }
   }

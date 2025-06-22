@@ -1,7 +1,7 @@
-import { supabase } from '../db';
 import { bot } from '../bot';
 import { NODE_ENV } from '../config';
 import { SYSTEM_ERROR_MESSAGES } from '../constants';
+import { supabase } from '../db';
 
 export const gracefulShutdown = (): void => {
   const shutdown = async (signal: string): Promise<void> => {

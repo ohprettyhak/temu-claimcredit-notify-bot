@@ -1,5 +1,15 @@
-import { Scenes, Markup } from 'telegraf';
 import { DateTime } from 'luxon';
+import { Scenes, Markup } from 'telegraf';
+
+import {
+  CALLBACK_ACTIONS,
+  CALLBACK_PREFIXES,
+  SCENE_IDS,
+  VALIDATION_PATTERNS,
+  UI_MESSAGES,
+  APP_CONFIG,
+  SYSTEM_ERROR_MESSAGES,
+} from '../constants';
 import {
   confirmKeyboard,
   timeKeyboard,
@@ -16,15 +26,6 @@ import {
   SessionCreationData,
   NotificationInput,
 } from '../types';
-import {
-  CALLBACK_ACTIONS,
-  CALLBACK_PREFIXES,
-  SCENE_IDS,
-  VALIDATION_PATTERNS,
-  UI_MESSAGES,
-  APP_CONFIG,
-  SYSTEM_ERROR_MESSAGES,
-} from '../constants';
 
 const DEFAULT_TIMEZONE = APP_CONFIG.DEFAULT_TIMEZONE;
 
@@ -70,6 +71,7 @@ const updateFormMessage = async (
     try {
       await ctx.telegram.editMessageText(ctx.chat.id, formMessageId, undefined, message, keyboard);
     } catch (error) {
+      console.error(error);
       await ctx.reply(message, keyboard);
     }
   } else {

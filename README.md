@@ -9,17 +9,21 @@
 
 </div>
 
-일주 일동안 접속해 수령해야 하는 'claimcredit' 이벤트를 위해 개발한 텔레그램 봇이에요.
+<br />
+
+일주일 동안 접속해 수령해야 하는 'claimcredit' 이벤트를 위해 개발한 텔레그램 봇이에요.
 
 세션을 등록한 날부터 7일간 아침(수령하지 않았다면 저녁)에 알림을 보내요.
 
 사용법은 텔레그램 봇을 실행한 후 `/help` 명령어를 입력해 확인할 수 있어요.
 
+<br />
+
 ### 직접 실행하기
 
 이 봇은 [Node.js](https://nodejs.org/), [Supabase Database](https://supabase.com/) 환경에서 동작해요.
 
-프로젝트를 클론한 후, 아래의 환경변수(.env)를 추가하세요.
+프로젝트를 클론한 후, 아래의 환경변수(`.env`)를 추가하세요.
 
 ```dotenv
 TELEGRAM_TOKEN=<your-telegram-bot-token>

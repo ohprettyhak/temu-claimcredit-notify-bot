@@ -1,7 +1,8 @@
 import { Telegraf, session, Scenes } from 'telegraf';
+
 import { TELEGRAM_TOKEN } from '../config';
-import { MyContext } from '../types';
 import { startSession, statusHandler, cancelHandler } from '../handlers';
+import { MyContext } from '../types';
 import { handleClaimAction, handleDeleteSessionAction } from './actions';
 import {
   COMMANDS,

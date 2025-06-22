@@ -1,7 +1,8 @@
 import { Markup } from 'telegraf';
-import { MyContext } from '../types';
-import { getUserSessions, createSessionButtons } from '../services';
+
 import { UI_MESSAGES, SYSTEM_ERROR_MESSAGES } from '../constants';
+import { getUserSessions, createSessionButtons } from '../services';
+import { MyContext } from '../types';
 
 export const cancelHandler = async (ctx: MyContext): Promise<void> => {
   try {

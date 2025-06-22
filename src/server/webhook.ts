@@ -1,6 +1,7 @@
 import express from 'express';
-import { WEBHOOK_URL, WEBHOOK_PORT, WEBHOOK_PATH } from '../config';
+
 import { bot } from '../bot';
+import { WEBHOOK_URL, WEBHOOK_PORT, WEBHOOK_PATH } from '../config';
 import { WEBHOOK_MESSAGES, DEV_LOGS, SYSTEM_ERROR_MESSAGES } from '../constants';
 import { TelegramUpdate } from '../types';
 

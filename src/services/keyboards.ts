@@ -1,4 +1,5 @@
 import { Markup } from 'telegraf';
+
 import { BUTTON_TEXTS, CALLBACK_ACTIONS, CALLBACK_PREFIXES, APP_CONFIG } from '../constants';
 import { TimeType } from '../types';
 

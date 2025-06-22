@@ -1,3 +1,4 @@
+import { UI_MESSAGES } from '../constants';
 import { supabase } from '../db';
 import {
   DatabaseSession,
@@ -7,7 +8,6 @@ import {
   NotificationInput,
   NotificationType,
 } from '../types';
-import { UI_MESSAGES } from '../constants';
 
 export const getUserSessions = async (userId: number): Promise<DatabaseSession[]> => {
   const { data: sessions, error } = await supabase

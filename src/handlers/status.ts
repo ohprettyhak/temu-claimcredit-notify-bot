@@ -1,7 +1,8 @@
 import { DateTime } from 'luxon';
-import { MyContext } from '../types';
-import { getUserSessions, getNotificationStatus } from '../services';
+
 import { UI_MESSAGES, SYSTEM_ERROR_MESSAGES } from '../constants';
+import { getUserSessions, getNotificationStatus } from '../services';
+import { MyContext } from '../types';
 import { withErrorHandling, withUserValidation } from '../utils';
 
 const generateStatusMessage = async (userId: number): Promise<string> => {

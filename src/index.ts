@@ -1,8 +1,8 @@
-import { NODE_ENV } from './config';
 import { initializeBot, bot } from './bot';
+import { NODE_ENV } from './config';
+import { DEV_LOGS, SYSTEM_ERROR_MESSAGES } from './constants';
 import { setupWebhook, setupRoutes, startServer } from './server';
 import { scheduleJobs } from './services';
-import { DEV_LOGS, SYSTEM_ERROR_MESSAGES } from './constants';
 import { gracefulShutdown } from './utils';
 
 const startApp = async (): Promise<void> => {
