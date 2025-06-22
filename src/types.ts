@@ -1,6 +1,5 @@
 import { Context, Scenes } from 'telegraf';
 
-// ===== Telegram API Types =====
 export interface TelegramUser {
   id: number;
   username?: string;
@@ -41,7 +40,6 @@ export interface TelegramUpdate {
   edited_channel_post?: TelegramMessage;
 }
 
-// ===== Application Types =====
 export interface SessionState extends Scenes.WizardSessionData {
   timezone?: string;
   morningTime?: string;
@@ -98,7 +96,6 @@ export interface SessionCreationData {
   todayClaimStatus: boolean;
 }
 
-// ===== Type Guards =====
 export const hasCallbackData = (
   ctx: MyContext,
 ): ctx is MyContext & { callbackQuery: { data: string } } => {
@@ -111,6 +108,5 @@ export const hasMessageText = (
   return !!(ctx.message && 'text' in ctx.message);
 };
 
-// ===== Utility Types =====
 export type NotificationType = 'morning' | 'evening';
 export type TimeType = 'MORN' | 'EVE';
