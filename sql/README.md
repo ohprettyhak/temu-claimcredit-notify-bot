@@ -1,6 +1,6 @@
-# Database Setup
+## Database 설정하기
 
-Execute these SQL files in the following order:
+SQL Editor에서 아래의 파일에 작성된 SQL 명령어를 순차적으로 실행해요.
 
 1. `users.sql`
 2. `sessions.sql`

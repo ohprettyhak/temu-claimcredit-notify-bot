@@ -60,7 +60,6 @@ Temu 크레딧백 알림 봇이에요.
   SESSION_CANCEL_ERROR: '세션 조회 중 오류가 발생했어요.',
   PROCESSING_ERROR: '처리 중 오류가 발생했어요.',
   FAILED_TO_FETCH_SESSIONS: '세션 정보를 가져오는데 실패했어요.',
-  SESSION_NOT_FOUND: '세션을 찾을 수 없어요.',
   NOTIFICATION_SEND_ERROR: (chatId: string, notifId: string) =>
     `알림 전송에 실패했어요. (사용자: ${chatId}, ID: ${notifId})`,
 } as const;

@@ -8,7 +8,7 @@ import { gracefulShutdown } from './utils';
 const startApp = async (): Promise<void> => {
   try {
     console.log(DEV_LOGS.BOT_RUNNING);
-    
+
     initializeBot();
 
     if (NODE_ENV === 'production') {

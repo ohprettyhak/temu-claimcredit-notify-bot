@@ -1,6 +1,3 @@
-DROP VIEW IF EXISTS public.notification_by_datetime_view;
-DROP VIEW IF EXISTS public.notifications_by_datetime_view;
-
 CREATE VIEW public.notifications_by_datetime_view AS
 SELECT 
     n.notification_id,
@@ -15,11 +12,6 @@ SELECT
     n.notification_date,
     n.is_clicked,
     n.sent_time_utc,
-    CASE 
-        WHEN n.notification_time_utc::timestamp <= NOW() - INTERVAL '1 hour' 
-        THEN true 
-        ELSE false 
-    END AS is_overdue,
     n.created_at
 FROM public.notifications n
 INNER JOIN public.sessions s ON n.session_id = s.session_id

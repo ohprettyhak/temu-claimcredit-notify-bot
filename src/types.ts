@@ -118,7 +118,6 @@ export interface NotificationViewData {
   notification_date: string;
   is_clicked: boolean;
   sent_time_utc?: string;
-  is_overdue: boolean;
   created_at: string;
 }
 

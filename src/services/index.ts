@@ -1,7 +1,6 @@
 export {
   getUserSessions,
   getNotificationStatus,
-  getSessionUser,
   updateNotificationSentTime,
   createUser,
   createSession,

@@ -38,20 +38,6 @@ export const getNotificationStatus = async (
   return notification?.is_clicked || false;
 };
 
-export const getSessionUser = async (sessionId: string): Promise<number> => {
-  const { data: session, error } = await supabase
-    .from('sessions')
-    .select('user_id')
-    .eq('session_id', sessionId)
-    .single();
-
-  if (error || !session) {
-    throw new Error(UI_MESSAGES.SESSION_NOT_FOUND);
-  }
-
-  return session.user_id;
-};
-
 export const updateNotificationSentTime = async (
   notificationId: string,
   sentTime: string,

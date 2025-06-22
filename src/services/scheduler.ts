@@ -4,7 +4,7 @@ import { bot } from '../bot';
 import { supabase } from '../db';
 import { NotificationViewData, NotificationType } from '../types';
 import { updateNotificationSentTime, claimButtons } from './index';
-import { UI_MESSAGES, APP_CONFIG, SYSTEM_ERROR_MESSAGES, DEV_LOGS } from '../constants';
+import { UI_MESSAGES, SYSTEM_ERROR_MESSAGES, DEV_LOGS } from '../constants';
 
 const getDueNotifications = async (now: DateTime): Promise<NotificationViewData[]> => {
   const { data: currentNotifications, error: currentError } = await supabase
@@ -13,34 +13,74 @@ const getDueNotifications = async (now: DateTime): Promise<NotificationViewData[
     .eq('year', now.year)
     .eq('month', now.month)
     .eq('day', now.day)
-    .eq('hour', now.hour)
-    .eq('is_overdue', false);
-
-  const { data: overdueNotifications, error: overdueError } = await supabase
-    .from('notifications_by_datetime_view')
-    .select('*')
-    .eq('is_overdue', true);
+    .eq('hour', now.hour);
 
   if (currentError) {
     console.error(SYSTEM_ERROR_MESSAGES.ERROR_FETCHING_NOTIFICATIONS, currentError);
     throw currentError;
   }
 
-  if (overdueError) {
-    console.error(SYSTEM_ERROR_MESSAGES.ERROR_FETCHING_NOTIFICATIONS, overdueError);
-    throw overdueError;
+  if (!currentNotifications?.length) {
+    return [];
   }
 
-  const allNotifications = [...(currentNotifications || []), ...(overdueNotifications || [])];
-  
-  if (currentNotifications?.length) {
-    console.log(DEV_LOGS.CURRENT_NOTIFICATIONS_FOUND(currentNotifications.length, now.toISO() || ''));
-  }
-  if (overdueNotifications?.length) {
-    console.log(DEV_LOGS.OVERDUE_NOTIFICATIONS_FOUND(overdueNotifications.length));
+  const eveningNotifications = currentNotifications.filter(n => n.notification_type === 'evening');
+
+  if (!eveningNotifications.length) {
+    console.log(
+      DEV_LOGS.CURRENT_NOTIFICATIONS_FOUND(currentNotifications.length, now.toISO() || ''),
+    );
+    return currentNotifications;
   }
 
-  return allNotifications;
+  const { data: morningNotifications, error: morningError } = await supabase
+    .from('notifications_by_datetime_view')
+    .select('session_id, notification_date, is_clicked')
+    .eq('notification_type', 'morning')
+    .in(
+      'session_id',
+      eveningNotifications.map(n => n.session_id),
+    )
+    .in('notification_date', [...new Set(eveningNotifications.map(n => n.notification_date))]);
+
+  if (morningError) {
+    console.error(SYSTEM_ERROR_MESSAGES.ERROR_FETCHING_NOTIFICATIONS, morningError);
+  }
+
+  const morningClaimedMap = new Map<string, boolean>();
+  morningNotifications?.forEach(morning => {
+    const key = `${morning.session_id}_${morning.notification_date}`;
+    morningClaimedMap.set(key, morning.is_clicked);
+  });
+
+  const filteredNotifications = currentNotifications.filter(notification => {
+    if (notification.notification_type === 'morning') {
+      return true;
+    }
+
+    const key = `${notification.session_id}_${notification.notification_date}`;
+    const morningClaimed = morningClaimedMap.get(key);
+
+    if (morningClaimed) {
+      console.log(
+        DEV_LOGS.SKIPPING_EVENING_NOTIFICATION_DUE_TO_MORNING_CLAIM(
+          notification.notification_id,
+          notification.session_id,
+        ),
+      );
+      return false;
+    }
+
+    return true;
+  });
+
+  if (filteredNotifications.length) {
+    console.log(
+      DEV_LOGS.CURRENT_NOTIFICATIONS_FOUND(filteredNotifications.length, now.toISO() || ''),
+    );
+  }
+
+  return filteredNotifications;
 };
 
 const sendNotificationMessage = async (
@@ -53,10 +93,8 @@ const sendNotificationMessage = async (
       ? UI_MESSAGES.MORNING_NOTIFICATION
       : UI_MESSAGES.EVENING_NOTIFICATION;
 
-  const keyboard = claimButtons(notificationId);
-
   await bot.telegram.sendMessage(chatId, message, {
-    reply_markup: keyboard.reply_markup,
+    reply_markup: claimButtons(notificationId).reply_markup,
   });
 };
 
@@ -91,36 +129,18 @@ const processNotifications = async (): Promise<void> => {
     const now = DateTime.utc();
     const dueNotifications = await getDueNotifications(now);
 
-    const nowISO = now.toISO();
-    if (dueNotifications.length === 0) {
-      if (nowISO) {
-        console.log(DEV_LOGS.NO_DUE_NOTIFICATIONS(nowISO));
-      }
+    if (!dueNotifications.length) {
+      console.log(DEV_LOGS.NO_DUE_NOTIFICATIONS(now.toISO() || ''));
       return;
     }
 
-    const currentNotifications = dueNotifications.filter(n => !n.is_overdue);
-    const overdueNotifications = dueNotifications.filter(n => n.is_overdue);
-
     console.log(DEV_LOGS.PROCESSING_NOTIFICATIONS(dueNotifications.length));
-    if (currentNotifications.length > 0) {
-      console.log(DEV_LOGS.PROCESSING_CURRENT_NOTIFICATIONS(currentNotifications.length));
-    }
-    if (overdueNotifications.length > 0) {
-      console.log(DEV_LOGS.PROCESSING_OVERDUE_NOTIFICATIONS(overdueNotifications.length));
-    }
 
-    const uniqueNotifications = dueNotifications.filter((notification, index, self) => 
-      index === self.findIndex(n => n.notification_id === notification.notification_id)
-    );
-
-    for (const notification of uniqueNotifications) {
+    for (const notification of dueNotifications) {
       await processNotification(notification, now);
     }
 
-    if (nowISO) {
-      console.log(DEV_LOGS.COMPLETED_PROCESSING(nowISO));
-    }
+    console.log(DEV_LOGS.COMPLETED_PROCESSING(now.toISO() || ''));
   } catch (error) {
     console.error(SYSTEM_ERROR_MESSAGES.ERROR_IN_PROCESSING, error);
   }
@@ -132,4 +152,4 @@ export const scheduleJobs = (): void => {
   });
 
   console.log(DEV_LOGS.SCHEDULER_INITIALIZED);
-}; 
+};
