@@ -56,6 +56,18 @@ export interface MyContext extends Context {
   wizard: Scenes.WizardContextWizard<MyContext>;
 }
 
+export interface DatabaseUser {
+  user_id: number;
+  timezone: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface UserInput {
+  user_id: number;
+  timezone: string;
+}
+
 export interface DatabaseSession {
   session_id: string;
   user_id: number;
@@ -66,24 +78,48 @@ export interface DatabaseSession {
   created_at: string;
 }
 
+export interface SessionInput {
+  user_id: number;
+  start_date: string;
+  end_date: string;
+  morning_notification_time: string;
+  evening_notification_time: string;
+}
+
 export interface NotificationRecord {
   notification_id: string;
   session_id: string;
   notification_date: string;
-  notification_type: string;
+  notification_type: NotificationType;
   notification_time_utc: string;
   is_clicked: boolean;
   sent_time_utc?: string;
+  created_at: string;
+}
+
+export interface NotificationInput {
+  session_id: string;
+  notification_date: string;
+  notification_type: NotificationType;
+  notification_time_utc: string;
+  is_clicked: boolean;
 }
 
 export interface NotificationViewData {
   notification_id: string;
   session_id: string;
-  notification_type: string;
+  user_id: number;
+  notification_type: NotificationType;
   year: number;
   month: number;
   day: number;
   hour: number;
+  notification_time_utc: string;
+  notification_date: string;
+  is_clicked: boolean;
+  sent_time_utc?: string;
+  is_overdue: boolean;
+  created_at: string;
 }
 
 export interface SessionCreationData {

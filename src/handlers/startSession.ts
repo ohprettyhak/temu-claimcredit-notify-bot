@@ -9,7 +9,13 @@ import {
   createNotifications,
   toUTC,
 } from '../services';
-import { hasCallbackData, hasMessageText, MyContext, SessionCreationData } from '../types';
+import {
+  hasCallbackData,
+  hasMessageText,
+  MyContext,
+  SessionCreationData,
+  NotificationInput,
+} from '../types';
 import {
   CALLBACK_ACTIONS,
   CALLBACK_PREFIXES,
@@ -96,8 +102,8 @@ const handleCancellation = async (ctx: MyContext): Promise<void> => {
   await ctx.scene.leave();
 };
 
-const createNotificationData = (data: SessionCreationData) => {
-  const notifications = [];
+const createNotificationData = (data: SessionCreationData): NotificationInput[] => {
+  const notifications: NotificationInput[] = [];
 
   for (let i = 0; i < APP_CONFIG.SESSION_DURATION_DAYS; i++) {
     const date = DateTime.fromISO(data.startDate).plus({ days: i }).toISODate();
@@ -141,6 +147,38 @@ const validateSessionData = (ctx: MyContext): boolean => {
   );
 };
 
+const calculateEndDate = (startDate: string): string | null => {
+  return DateTime.fromISO(startDate)
+    .plus({ days: APP_CONFIG.SESSION_DURATION_DAYS - 1 })
+    .toISODate();
+};
+
+const createUserAndSession = async (
+  userId: number,
+  startDate: string,
+  endDate: string,
+  morningTime: string,
+  eveningTime: string,
+) => {
+  await createUser({
+    user_id: userId,
+    timezone: DEFAULT_TIMEZONE,
+  });
+
+  return await createSession({
+    user_id: userId,
+    start_date: startDate,
+    end_date: endDate,
+    morning_notification_time: morningTime,
+    evening_notification_time: eveningTime,
+  });
+};
+
+const createSessionNotifications = async (sessionData: SessionCreationData): Promise<void> => {
+  const notifications = createNotificationData(sessionData);
+  await createNotifications(notifications);
+};
+
 const processSessionCreation = async (ctx: MyContext): Promise<void> => {
   try {
     if (!ctx.from) {
@@ -157,24 +195,19 @@ const processSessionCreation = async (ctx: MyContext): Promise<void> => {
 
     await updateFormStatus(ctx, UI_MESSAGES.SESSION_PROCESSING);
 
-    const endDate = DateTime.fromISO(startDate!)
-      .plus({ days: APP_CONFIG.SESSION_DURATION_DAYS - 1 })
-      .toISODate();
-
+    const endDate = calculateEndDate(startDate!);
     if (!endDate) {
       await ctx.reply(UI_MESSAGES.SESSION_CREATION_FAILED);
       return;
     }
 
-    await createUser(ctx.from.id, DEFAULT_TIMEZONE);
-
-    const session = await createSession({
-      user_id: ctx.from.id,
-      start_date: startDate!,
-      end_date: endDate,
-      morning_notification_time: morningTime!,
-      evening_notification_time: eveningTime!,
-    });
+    const session = await createUserAndSession(
+      ctx.from.id,
+      startDate!,
+      endDate,
+      morningTime!,
+      eveningTime!,
+    );
 
     const sessionData: SessionCreationData = {
       sessionId: session.session_id,
@@ -186,9 +219,7 @@ const processSessionCreation = async (ctx: MyContext): Promise<void> => {
       todayClaimStatus: todayClaimStatus!,
     };
 
-    const notifications = createNotificationData(sessionData);
-    await createNotifications(notifications);
-
+    await createSessionNotifications(sessionData);
     await updateFormStatus(ctx, UI_MESSAGES.SESSION_SUCCESS);
   } catch (error) {
     console.error(SYSTEM_ERROR_MESSAGES.SESSION_CREATION_ERROR, error);

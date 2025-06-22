@@ -31,16 +31,8 @@ const generateStatusMessage = async (userId: number): Promise<string> => {
       totalDays++;
       const dateStr = date.toISODate()!;
 
-      const morningClaimed = await getNotificationStatus(
-        session.session_id,
-        dateStr,
-        APP_CONFIG.NOTIFICATION_TYPES.MORNING as NotificationType,
-      );
-      const eveningClaimed = await getNotificationStatus(
-        session.session_id,
-        dateStr,
-        APP_CONFIG.NOTIFICATION_TYPES.EVENING as NotificationType,
-      );
+      const morningClaimed = await getNotificationStatus(session.session_id, dateStr, 'morning');
+      const eveningClaimed = await getNotificationStatus(session.session_id, dateStr, 'evening');
 
       if (morningClaimed || eveningClaimed) {
         completedDays++;

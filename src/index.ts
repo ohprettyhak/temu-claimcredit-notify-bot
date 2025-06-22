@@ -1,7 +1,7 @@
 import { NODE_ENV } from './config';
 import { initializeBot, bot } from './bot';
 import { setupWebhook, setupRoutes, startServer } from './server';
-import { scheduleJobs } from './scheduler';
+import { scheduleJobs } from './services';
 import { DEV_LOGS, SYSTEM_ERROR_MESSAGES } from './constants';
 import { gracefulShutdown } from './utils';
 

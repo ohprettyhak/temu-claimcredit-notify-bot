@@ -1,5 +1,12 @@
 import { supabase } from '../db';
-import { DatabaseSession, NotificationType } from '../types';
+import {
+  DatabaseSession,
+  DatabaseUser,
+  UserInput,
+  SessionInput,
+  NotificationInput,
+  NotificationType,
+} from '../types';
 import { UI_MESSAGES } from '../constants';
 
 export const getUserSessions = async (userId: number): Promise<DatabaseSession[]> => {
@@ -55,17 +62,17 @@ export const updateNotificationSentTime = async (
     .eq('notification_id', notificationId);
 };
 
-export const createUser = async (userId: number, timezone: string): Promise<void> => {
-  await supabase.from('users').upsert({ user_id: userId, timezone });
+export const createUser = async (userInput: UserInput): Promise<DatabaseUser> => {
+  const { data: user, error } = await supabase.from('users').upsert(userInput).select().single();
+
+  if (error || !user) {
+    throw new Error('Failed to create user');
+  }
+
+  return user;
 };
 
-export const createSession = async (sessionData: {
-  user_id: number;
-  start_date: string;
-  end_date: string;
-  morning_notification_time: string;
-  evening_notification_time: string;
-}): Promise<DatabaseSession> => {
+export const createSession = async (sessionData: SessionInput): Promise<DatabaseSession> => {
   const { data: session, error } = await supabase
     .from('sessions')
     .insert(sessionData)
@@ -79,15 +86,7 @@ export const createSession = async (sessionData: {
   return session;
 };
 
-export const createNotifications = async (
-  notifications: Array<{
-    session_id: string;
-    notification_date: string;
-    notification_type: string;
-    notification_time_utc: string;
-    is_clicked: boolean;
-  }>,
-): Promise<void> => {
+export const createNotifications = async (notifications: NotificationInput[]): Promise<void> => {
   const { error } = await supabase.from('notifications').insert(notifications);
 
   if (error) {

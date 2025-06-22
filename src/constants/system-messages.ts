@@ -16,6 +16,11 @@ export const DEV_LOGS = {
   NO_DUE_NOTIFICATIONS: (timestamp: string) => `${timestamp}에 예정된 알림이 없어요.`,
   PROCESSING_NOTIFICATIONS: (count: number) => `${count}개의 알림을 처리 중이에요.`,
   COMPLETED_PROCESSING: (timestamp: string) => `${timestamp}의 알림 처리를 완료했어요.`,
+  CURRENT_NOTIFICATIONS_FOUND: (count: number, timestamp: string) =>
+    `정시 알림 ${count}개 발견 (${timestamp})`,
+  OVERDUE_NOTIFICATIONS_FOUND: (count: number) => `놓친 알림 ${count}개 발견`,
+  PROCESSING_CURRENT_NOTIFICATIONS: (count: number) => `정시 알림 ${count}개 처리 중`,
+  PROCESSING_OVERDUE_NOTIFICATIONS: (count: number) => `놓친 알림 ${count}개 처리 중`,
 
   WEBHOOK_SERVER_LISTENING: (port: number) => `웹훅 서버가 포트 ${port}에서 실행 중이에요.`,
   WEBHOOK_URL_SET: (url: string) => `웹훅 URL 설정: ${url}`,
