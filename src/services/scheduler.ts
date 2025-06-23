@@ -36,7 +36,7 @@ const getDueNotifications = async (now: DateTime): Promise<NotificationViewData[
   }
 
   const { data: morningNotifications, error: morningError } = await supabase
-    .from('notifications_by_datetime_view')
+    .from('notifications')
     .select('session_id, notification_date, is_clicked')
     .eq('notification_type', 'morning')
     .in(
