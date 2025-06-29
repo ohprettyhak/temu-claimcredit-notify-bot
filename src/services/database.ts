@@ -1,3 +1,5 @@
+import { DateTime } from 'luxon';
+
 import { UI_MESSAGES } from '../constants';
 import { supabase } from '../db';
 import {
@@ -10,10 +12,13 @@ import {
 } from '../types';
 
 export const getUserSessions = async (userId: number): Promise<DatabaseSession[]> => {
+  const currentDate = DateTime.now().toISODate();
+  
   const { data: sessions, error } = await supabase
     .from('sessions')
     .select('*')
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .gte('end_date', currentDate);
 
   if (error) {
     throw new Error(UI_MESSAGES.FAILED_TO_FETCH_SESSIONS);
